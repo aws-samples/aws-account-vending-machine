@@ -1,0 +1,97 @@
+#Cloud Formation for vending a new account.
+#Copyright 2008-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+
+#Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance with the License. A copy of the License is located at
+#http://aws.amazon.com/apache2.0/
+#or in the "license" file accompanying this file. This file is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: This template accepts parameters for creating a new account in your AWS Organization, with a baseline set of resources (fdp-1pg15bsqb)
+Metadata:
+  'AWS::CloudFormation::Interface':
+    ParameterGroups:
+      - Label:
+          default: Parameters for the new account to be created
+        Parameters:
+          - MasterLambdaArn
+          - AccountEmail
+          - OrganizationalUnitName
+          - AccountName
+          - StackName
+          - StackRegion
+          - SourceBucket
+          - BaselineTemplate
+
+Parameters:
+  MasterLambdaArn:
+    Description: "Enter the ARN for the lambda function in your root account for creating accounts (OUTPUTS from Infrastructure Setup CloudFormation)"
+    Type: String
+
+  AccountEmail:
+   Description: "Email address of the AWS account to be created"
+   Type: String
+   AllowedPattern: ".+"
+   ConstraintDescription: "Must provide a valid email address"
+
+  AccountName:
+    Description: "Name of the new AWS Account Name"
+    Type: String
+    AllowedPattern: ".+"
+    ConstraintDescription: "Provide the account name"
+
+  OrganizationalUnitName:
+    Description: "Name of the organizational unit (OU) to which the account should be moved to."
+    Type: String
+    Default: "None"
+    AllowedPattern: ".+"
+
+  StackRegion:
+    Description: "Region for deploying the baseline template in the vended account"
+    Default: "us-west-2"
+    Type: String
+    AllowedPattern: ".+"
+    AllowedValues: ["us-east-2","us-east-1","us-west-1","us-west-2","ap-northeast-1","ap-northeast-2","ap-northeast-3","ap-south-1","ap-southeast-1","ap-southeast-2","ca-central-1","cn-north-1","cn-northwest-1","eu-central-1","eu-west-1","eu-west-2","eu-west-3","sa-east-1"]
+    ConstraintDescription: "Must be a valid AWS region"
+
+  SourceBucket:
+    Description: "Name of the S3 bucket holding the baseline template file"
+    Type: String
+
+  BaselineTemplate:
+    Description: "Baseline template to be deployed in the vended account."
+    Type: String
+    Default: "Accountbaseline.yml"
+
+Resources:
+
+  TriggerAccountLambda:
+    Type: "Custom::TriggerAccountLambda"
+    DeletionPolicy: Retain
+    Properties:
+      ServiceToken: !Ref MasterLambdaArn
+      AccountEmail : !Ref AccountEmail
+      AccountName : !Ref AccountName
+      OrganizationalUnitName: !Ref 'OrganizationalUnitName'
+      StackName : 'avm-baseline-stack'
+      StackRegion : !Ref StackRegion
+      ServiceCatalogUserName : 'service-catalog-user'
+      ServiceCatalogUserPassword : 'service-catalog-2019'
+      SourceBucket : !Ref SourceBucket
+      BaselineTemplate: !Ref BaselineTemplate
+
+Outputs:
+  Message:
+    Description: Execution Status
+    Value: !GetAtt 'TriggerAccountLambda.Message'
+
+  AccountID:
+    Description: AWS Account ID of the newly vended account
+    Value: !GetAtt 'TriggerAccountLambda.AccountID'
+
+  Username:
+    Description: Username of IAM user created in the newly vended account
+    Value: !GetAtt 'TriggerAccountLambda.Username'
+
+  LoginURL:
+    Description: Login URL for the newly vended account
+    Value: !GetAtt 'TriggerAccountLambda.LoginURL'

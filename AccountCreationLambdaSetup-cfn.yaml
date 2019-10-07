@@ -1,0 +1,137 @@
+#Copyright 2008-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+
+#Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance with the License. A copy of the License is located at
+#http://aws.amazon.com/apache2.0/
+#or in the "license" file accompanying this file. This file is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: This template sets up the infrastructure required for an AWS Service Catalog based Account Vending Machine. (fdp-1pg158jfl)
+Parameters:
+  SourceBucket:
+    Description: "Bucket name of the S3 bucket holding all the files for the Account Vending Machine set up"
+    Type: String
+    Default: "awsmpsa-reinvent-2019"
+
+  SourceTemplate:
+    Description: "Enter the template URL for the cloudformation template to launch account creation"
+    Type: String
+    Default: "https://s3.amazonaws.com/awsmpsa-reinvent-2019/accountbuilder.yml"
+
+  AccountAdministrator:
+    Description: "Enter the ARN of the IAM entity (role or user or group) that will be performing account creation from AWS Service Catalog"
+    Type: String
+    AllowedPattern: ".+"
+
+Resources:
+  AccountBuilderLambda:
+    Type: "AWS::Lambda::Function"
+    DependsOn: LambdaExecuteRole
+    Properties:
+      Handler: "AccountCreationLambda.main"
+      Runtime: "python3.6"
+      Role: !GetAtt LambdaExecuteRole.Arn
+      Timeout: 800
+      TracingConfig:
+          Mode: "Active"
+      Code:
+        S3Bucket: !Ref SourceBucket
+        S3Key: "AccountCreationLambda.zip"
+
+  LambdaExecuteRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AdministratorAccess"
+      Path: "/"
+
+  AccountVendingPortfolio:
+    Type: "AWS::ServiceCatalog::Portfolio"
+    Properties:
+      DisplayName: "Account Vending Machine"
+      AcceptLanguage: "en"
+      ProviderName: "AWS"
+
+  AccountVendingMachineProduct:
+    Type: "AWS::ServiceCatalog::CloudFormationProduct"
+    Properties:
+      AcceptLanguage: "en"
+      Description: "This product is an account vending machine builds a new account"
+      Distributor: "Amazon"
+      Name: "Account Vending Machine"
+      Owner: "AWS"
+      SupportEmail: "support@yourcompany.com"
+      SupportUrl: "https://www.amazon.com"
+      SupportDescription: "Support Description"
+      ProvisioningArtifactParameters:
+      -
+        Description: "March 2019"
+        Name: "March 2019 v1.0"
+        Info:
+          LoadTemplateFromURL : !Ref SourceTemplate
+
+  AVMAssociation:
+    Type: "AWS::ServiceCatalog::PortfolioProductAssociation"
+    Properties:
+      ProductId: !Ref AccountVendingMachineProduct
+      PortfolioId: !Ref AccountVendingPortfolio
+
+  PortfolioPrincipalAssociation:
+    Type: "AWS::ServiceCatalog::PortfolioPrincipalAssociation"
+    Properties:
+      PrincipalARN: !Ref AccountAdministrator
+      PortfolioId: !Ref AccountVendingPortfolio
+      PrincipalType: IAM
+
+  ServiceCatalogLaunchRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "servicecatalog.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AdministratorAccess"
+      Path: "/"
+
+  ServiceCatalogLaunchConstraint:
+    Type: "AWS::ServiceCatalog::LaunchRoleConstraint"
+    DependsOn: ServiceCatalogLaunchRole
+    Properties:
+      Description: This is a launch constraint created for the account vending portfolio
+      AcceptLanguage: en
+      PortfolioId: !Ref AccountVendingPortfolio
+      ProductId: !Ref AccountVendingMachineProduct
+      RoleArn: !GetAtt ServiceCatalogLaunchRole.Arn
+
+  ServiceCatalogTagOption:
+    Type: "AWS::ServiceCatalog::TagOption"
+    Properties:
+      Active: true
+      Value: "avm-reference-architecture"
+      Key: "Name"
+
+  ServiceCatalogTagOptionAssociation:
+    Type: "AWS::ServiceCatalog::TagOptionAssociation"
+    Properties:
+      TagOptionId: !Ref ServiceCatalogTagOption
+      ResourceId: !Ref AccountVendingPortfolio
+
+Outputs:
+  AccountLambda:
+    Description: ARN of the account creation lambda function
+    Value: !GetAtt AccountBuilderLambda.Arn
+

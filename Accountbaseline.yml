@@ -1,0 +1,360 @@
+#This is the baseline template that will be launched in the newly vended account
+#version1- creates a new IAM user with the ServiceCatalog permission set
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: Baseline IAM resources for new account (fdp-1pg15ff8j)
+
+Parameters:
+  ServiceCatalogUserName:
+    Type: String
+    Description: Username for the IAM user for ServiceCatalog in the newly vended account
+  ServiceCatalogUserPassword:
+    Type: String
+    NoEcho: true
+    MinLength: 1
+    Description: Password for the IAM user for ServiceCatalog in the newly vended account
+
+Resources:
+  ServiceCatalogUser:
+    Type: 'AWS::IAM::User'
+    Properties:
+      UserName: !Ref ServiceCatalogUserName
+      Path: /
+      LoginProfile:
+        Password: !Ref ServiceCatalogUserPassword
+
+  ServiceCatalogUserKey:
+    Type: AWS::IAM::AccessKey
+    Properties: 
+      Status: 'Active'
+      UserName: !Ref ServiceCatalogUser
+
+  ServiceCatalogUserGroup:
+    Type: 'AWS::IAM::Group'
+    Properties:
+      GroupName: ServiceCatalogUserGroup
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AWSServiceCatalogEndUserFullAccess"
+        - "arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"
+      Path: /
+  
+  ServiceCatalogGroupPolicy:
+    Type: AWS::IAM::Policy
+    Properties: 
+      Groups: 
+        - !Ref ServiceCatalogUserGroup
+      PolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                  -
+                    Effect: "Allow"
+                    Action:
+                      - "cloudformation:Describe*"
+                      - "cloudformation:List*"
+                      - "cloudformation:Get*"
+                      - "ec2:CreateKeyPair"
+                    Resource: "*" 
+      PolicyName: "KeyPairCreate"
+
+  AddUserToGroup:
+    Type: 'AWS::IAM::UserToGroupAddition'
+    DependsOn: ServiceCatalogUserGroup
+    Properties:
+      GroupName: !Ref ServiceCatalogUserGroup
+      Users:
+        - !Ref ServiceCatalogUser
+
+  SCEC2LaunchRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: SCEC2LaunchRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - servicecatalog.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+
+  EC2LinuxProduct:
+    Type: "AWS::ServiceCatalog::CloudFormationProduct"
+    Properties:
+      AcceptLanguage: "en"
+      Description: "This product builds one Amazon Linux EC2 instance and create a SSM patch baseline, maintenance window, and patch task to scan for and install operating system updates the EC2 instance."
+      Distributor: "Amazon"
+      Name: "Amazon Elastic Compute Cloud (EC2) Linux"
+      Owner: "IT Services"
+      SupportEmail: "support@yourcompany.com"
+      SupportUrl: "https://www.amazon.com"
+      SupportDescription: "Support Description"
+      ProvisioningArtifactParameters:
+      -
+        Description: "June 2018"
+        Name: "June 2018"
+        Info:
+          LoadTemplateFromURL : "https://raw.githubusercontent.com/aws-samples/aws-service-catalog-reference-architectures/master/ec2/sc-ec2-linux-ra.json"
+
+  EC2WindowsProduct: 
+    Type: "AWS::ServiceCatalog::CloudFormationProduct"
+    Properties:
+      AcceptLanguage: "en"
+      Description: "This product builds one Amazon Windows EC2 instance and create a SSM patch baseline, maintenance window, and patch task to scan for and install operating system updates the EC2 instance."
+      Distributor: "Amazon"
+      Name: "Amazon Elastic Compute Cloud (EC2) Windows"
+      Owner: "IT Services"
+      SupportEmail: "support@yourcompany.com"
+      SupportUrl: "https://www.amazon.com"
+      SupportDescription: "Support Description"
+      ProvisioningArtifactParameters:
+      -
+        Description: "June 2018"
+        Name: "June 2018"
+        Info: 
+          LoadTemplateFromURL : "https://raw.githubusercontent.com/aws-samples/aws-service-catalog-reference-architectures/master/ec2/sc-ec2-windows-ra.json"
+
+  VPCProduct:
+    Type: "AWS::ServiceCatalog::CloudFormationProduct"
+    Properties:
+      AcceptLanguage: "en"
+      Description: "This product builds one Amazon VPC with Public Subnets, Private Subnets, Route Tables, NAT Gateway and Internet Gateway"
+      Distributor: "Amazon"
+      Name: "Amazon VPC"
+      Owner: "IT Services"
+      SupportEmail: "support@yourcompany.com"
+      SupportUrl: "https://www.amazon.com"
+      SupportDescription: "Support Description"
+      ProvisioningArtifactParameters:
+      -
+        Description: "June 2018"
+        Name: "June 2018"
+        Info:
+          LoadTemplateFromURL : "https://raw.githubusercontent.com/aws-samples/aws-service-catalog-reference-architectures/master/vpc/sc-vpc-ra.json"
+
+  EMRProduct:
+    Type: "AWS::ServiceCatalog::CloudFormationProduct"
+    Properties:
+      AcceptLanguage: "en"
+      Description: "EMR product creates an Amazon Elastic MapReduce cluster in the VPC and Subnets selected by the end user. A remote access security group is also created to allow for a bastion host to connect to the instances used by EMR via SSH."
+      Distributor: "Amazon"
+      Name: "EMR Product"
+      Owner: "IT Services"
+      SupportEmail: "support@yourcompany.com"
+      SupportUrl: "https://www.amazon.com"
+      SupportDescription: "Support Description"
+      ProvisioningArtifactParameters:
+      -
+        Description: "June 2018"
+        Name: "June 2018"
+        Info: 
+          LoadTemplateFromURL: "https://raw.githubusercontent.com/aws-samples/aws-service-catalog-reference-architectures/master/emr/sc-emr-ra.json"
+
+  RDSMySQLProduct:
+    Type: "AWS::ServiceCatalog::CloudFormationProduct"
+    Properties:
+      AcceptLanguage: "en"
+      Description: "This product allows the user to launch a RDS MySQL DB as either single instance databases or multi-availability zone databases."
+      Distributor: "Amazon"
+      Name: "RDS MySQL Product"
+      Owner: "IT Services"
+      SupportEmail: "support@yourcompany.com"
+      SupportUrl: "https://www.amazon.com"
+      SupportDescription: "Support Description"
+      ProvisioningArtifactParameters:
+      -
+        Description: "June 2018"
+        Name: "June 2018"
+        Info: 
+          LoadTemplateFromURL: "https://raw.githubusercontent.com/aws-samples/aws-service-catalog-reference-architectures/master/rds/sc-rds-mssql-ra.json"
+
+  RDSMariaDBProduct:
+    Type: "AWS::ServiceCatalog::CloudFormationProduct"
+    Properties:
+      AcceptLanguage: "en"
+      Description: "This product allows the user to launch a RDS Maria DB as either single instance databases or multi-availability zone databases."
+      Distributor: "Amazon"
+      Name: RDS MariaDB Product
+      Owner: "IT Services"
+      SupportEmail: "support@yourcompany.com"
+      SupportUrl: "https://www.amazon.com"
+      SupportDescription: "Support Description"
+      ProvisioningArtifactParameters:
+      -
+        Description: "June 2018"
+        Name: "June 2018"
+        Info: 
+          LoadTemplateFromURL: "https://raw.githubusercontent.com/aws-samples/aws-service-catalog-reference-architectures/master/rds/sc-rds-mariadb-ra.json"
+
+  RDSPostGreSqlProduct:
+    Type: "AWS::ServiceCatalog::CloudFormationProduct"
+    Properties:
+      AcceptLanguage: "en"
+      Description: "This product allows the user to launch a RDS POSTGRE SQL as either single instance databases or multi-availability zone databases."
+      Distributor: "Amazon"
+      Name: "RDS POSTGRE SQL Product"
+      Owner: "IT Services"
+      SupportEmail: "support@yourcompany.com"
+      SupportUrl: "https://www.amazon.com"
+      SupportDescription: "Support Description"
+      ProvisioningArtifactParameters:
+      -
+        Description: "June 2018"
+        Name: "June 2018"
+        Info: 
+          LoadTemplateFromURL: "https://raw.githubusercontent.com/aws-samples/aws-service-catalog-reference-architectures/master/rds/sc-rds-postgresql-ra.json"
+
+  S3BucketProduct:
+    Type: "AWS::ServiceCatalog::CloudFormationProduct"
+    Properties:
+      AcceptLanguage: "en"
+      Description: "This product allows the user to create an S3 Bucket locking down the access to a specific CIDR."
+      Distributor: "Amazon"
+      Name: "S3 Bucket Product"
+      Owner: "IT Services"
+      SupportEmail: "support@yourcompany.com"
+      SupportUrl: "https://www.amazon.com"
+      SupportDescription: "Support Description"
+      ProvisioningArtifactParameters:
+      -
+        Description: "June 2018"
+        Name: "June 2018"
+        Info:
+          LoadTemplateFromURL: "https://raw.githubusercontent.com/aws-samples/aws-service-catalog-reference-architectures/master/s3/sc-s3-cidr-ra.json"
+
+  BaselinePortfolio:
+    Type: "AWS::ServiceCatalog::Portfolio"
+    Properties:
+      DisplayName: "FirstPortfolio"
+      AcceptLanguage: "en"
+      ProviderName: "Amazon"
+
+  LinuxAssociation:
+    Type: "AWS::ServiceCatalog::PortfolioProductAssociation"
+    Properties:
+      ProductId: !Ref EC2LinuxProduct
+      PortfolioId: !Ref BaselinePortfolio
+
+  LinuxConstraint:
+    Type: AWS::ServiceCatalog::LaunchRoleConstraint
+    Properties: 
+      AcceptLanguage: "en"
+      Description: "Launch Constraint for this AWS Service Catalog product"
+      PortfolioId: !Ref BaselinePortfolio
+      ProductId: !Ref EC2LinuxProduct
+      RoleArn: !GetAtt SCEC2LaunchRole.Arn
+
+  WindowsAssociation:
+    Type: "AWS::ServiceCatalog::PortfolioProductAssociation"
+    Properties:
+      ProductId: !Ref EC2WindowsProduct
+      PortfolioId: !Ref BaselinePortfolio
+
+  WindowsConstraint:
+    Type: AWS::ServiceCatalog::LaunchRoleConstraint
+    Properties: 
+      AcceptLanguage: "en"
+      Description: "Launch Constraint for this AWS Service Catalog product"
+      PortfolioId: !Ref BaselinePortfolio
+      ProductId: !Ref EC2WindowsProduct
+      RoleArn: !GetAtt SCEC2LaunchRole.Arn
+
+  VPCAssociation:
+     Type: "AWS::ServiceCatalog::PortfolioProductAssociation"
+     Properties:
+       ProductId: !Ref VPCProduct
+       PortfolioId: !Ref BaselinePortfolio
+
+  VPCConstraint:
+    Type: AWS::ServiceCatalog::LaunchRoleConstraint
+    Properties: 
+      AcceptLanguage: "en"
+      Description: "Launch Constraint for this AWS Service Catalog product"
+      PortfolioId: !Ref BaselinePortfolio
+      ProductId: !Ref VPCProduct
+      RoleArn: !GetAtt SCEC2LaunchRole.Arn
+
+  EMRAssociation:
+     Type: "AWS::ServiceCatalog::PortfolioProductAssociation"
+     Properties:
+       ProductId: !Ref EMRProduct
+       PortfolioId: !Ref BaselinePortfolio
+
+  EMRConstraint:
+    Type: AWS::ServiceCatalog::LaunchRoleConstraint
+    Properties: 
+      AcceptLanguage: "en"
+      Description: "Launch Constraint for this AWS Service Catalog product"
+      PortfolioId: !Ref BaselinePortfolio
+      ProductId: !Ref EMRProduct
+      RoleArn: !GetAtt SCEC2LaunchRole.Arn
+
+  RDSMySQLAssociation:
+     Type: "AWS::ServiceCatalog::PortfolioProductAssociation"
+     Properties:
+       ProductId: !Ref RDSMySQLProduct
+       PortfolioId: !Ref BaselinePortfolio
+
+  RDSConstraint:
+    Type: AWS::ServiceCatalog::LaunchRoleConstraint
+    Properties: 
+      AcceptLanguage: "en"
+      Description: "Launch Constraint for this AWS Service Catalog product"
+      PortfolioId: !Ref BaselinePortfolio
+      ProductId: !Ref RDSMySQLProduct
+      RoleArn: !GetAtt SCEC2LaunchRole.Arn
+
+  RDSMariaDBAssociation:
+     Type: "AWS::ServiceCatalog::PortfolioProductAssociation"
+     Properties:
+       ProductId: !Ref RDSMariaDBProduct
+       PortfolioId: !Ref BaselinePortfolio
+
+  RDSMariaDBConstraint:
+    Type: AWS::ServiceCatalog::LaunchRoleConstraint
+    Properties: 
+      AcceptLanguage: "en"
+      Description: "Launch Constraint for this AWS Service Catalog product"
+      PortfolioId: !Ref BaselinePortfolio
+      ProductId: !Ref RDSMariaDBProduct
+      RoleArn: !GetAtt SCEC2LaunchRole.Arn
+
+  RDSPOSTGRESQLAssociation:
+     Type: "AWS::ServiceCatalog::PortfolioProductAssociation"
+     Properties:
+       ProductId: !Ref RDSPostGreSqlProduct
+       PortfolioId: !Ref BaselinePortfolio
+
+  RDSPOSTGRESQLConstraint:
+    Type: AWS::ServiceCatalog::LaunchRoleConstraint
+    Properties: 
+      AcceptLanguage: "en"
+      Description: "Launch Constraint for this AWS Service Catalog product"
+      PortfolioId: !Ref BaselinePortfolio
+      ProductId: !Ref RDSPostGreSqlProduct
+      RoleArn: !GetAtt SCEC2LaunchRole.Arn
+
+  S3BucketAssociation:
+     Type: "AWS::ServiceCatalog::PortfolioProductAssociation"
+     Properties:
+       ProductId: !Ref S3BucketProduct
+       PortfolioId: !Ref BaselinePortfolio
+
+  S3BucketConstraint:
+    Type: AWS::ServiceCatalog::LaunchRoleConstraint
+    Properties: 
+      AcceptLanguage: "en"
+      Description: "Launch Constraint for this AWS Service Catalog product"
+      PortfolioId: !Ref BaselinePortfolio
+      ProductId: !Ref S3BucketProduct
+      RoleArn: !GetAtt SCEC2LaunchRole.Arn
+
+  PortfolioPrincipalAssociationforEndUser:
+    Type: "AWS::ServiceCatalog::PortfolioPrincipalAssociation"
+    Properties:
+      PrincipalARN: !GetAtt ServiceCatalogUser.Arn
+      PortfolioId: !Ref BaselinePortfolio
+      PrincipalType: IAM
