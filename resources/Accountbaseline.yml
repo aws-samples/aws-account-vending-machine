@@ -22,6 +22,7 @@ Resources:
       Path: /
       LoginProfile:
         Password: !Ref ServiceCatalogUserPassword
+        PasswordResetRequired: true
 
   ServiceCatalogUserKey:
     Type: AWS::IAM::AccessKey

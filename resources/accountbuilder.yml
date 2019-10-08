@@ -56,6 +56,7 @@ Parameters:
   SourceBucket:
     Description: "Name of the S3 bucket holding the baseline template file"
     Type: String
+    Default: "awsmpsa-reinvent-2019"
 
   BaselineTemplate:
     Description: "Baseline template to be deployed in the vended account."
