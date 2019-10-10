@@ -28,7 +28,7 @@ This approach of bootstrapping accounts will reduce operational overhead and sta
 As a part of creating a sample account vending machine from this repository, you will first launch a CloudFormation template to create the account vending machine set up in your account.
 1. Login to your AWS account which is a **master account** in AWS Organizations. 
 _Note: You can customize this implementation to work with linked accounts as well, but for the purposes of this exercise, we will use the master account._
-2. Click on the `Launch Stack` image below this sentence to launch a Cloudformation template that will setup the required infrastructure for account vending machine in your AWS account. **TODO: update URL to github, update parameter defaults in CFN**
+2. Click on the `Launch Stack` image below this sentence to launch a Cloudformation template that will setup the required infrastructure for account vending machine in your AWS account.
 [![Launch Stack](/resources/images/launch-stack.svg)](https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=account-vending-infrastructure-setup&templateURL=https://awsmpsa-reinvent-2019.s3.us-east-2.amazonaws.com/AccountCreationLambdaSetup-cfn.yaml)
 3. On the `Create Stack` page, click `Next`.
 4. On the `Specify stack details` page, enter the following parameters:
