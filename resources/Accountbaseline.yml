@@ -37,6 +37,7 @@ Resources:
       ManagedPolicyArns:
         - "arn:aws:iam::aws:policy/AWSServiceCatalogEndUserFullAccess"
         - "arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"
+        - "arn:aws:iam::aws:policy/IAMUserChangePassword"
       Path: /
   
   ServiceCatalogGroupPolicy:
