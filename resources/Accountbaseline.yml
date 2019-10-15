@@ -26,7 +26,7 @@ Resources:
 
   ServiceCatalogUserKey:
     Type: AWS::IAM::AccessKey
-    Properties: 
+    Properties:
       Status: 'Active'
       UserName: !Ref ServiceCatalogUser
 
@@ -39,11 +39,11 @@ Resources:
         - "arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"
         - "arn:aws:iam::aws:policy/IAMUserChangePassword"
       Path: /
-  
+
   ServiceCatalogGroupPolicy:
     Type: AWS::IAM::Policy
-    Properties: 
-      Groups: 
+    Properties:
+      Groups:
         - !Ref ServiceCatalogUserGroup
       PolicyDocument:
                 Version: "2012-10-17"
@@ -55,7 +55,7 @@ Resources:
                       - "cloudformation:List*"
                       - "cloudformation:Get*"
                       - "ec2:CreateKeyPair"
-                    Resource: "*" 
+                    Resource: "*"
       PolicyName: "KeyPairCreate"
 
   AddUserToGroup:
@@ -96,12 +96,12 @@ Resources:
       SupportDescription: "Support Description"
       ProvisioningArtifactParameters:
       -
-        Description: "June 2018"
-        Name: "June 2018"
+        Description: "Dec 2019"
+        Name: "Dec 2019"
         Info:
           LoadTemplateFromURL : "https://raw.githubusercontent.com/aws-samples/aws-service-catalog-reference-architectures/master/ec2/sc-ec2-linux-ra.json"
 
-  EC2WindowsProduct: 
+  EC2WindowsProduct:
     Type: "AWS::ServiceCatalog::CloudFormationProduct"
     Properties:
       AcceptLanguage: "en"
@@ -114,9 +114,9 @@ Resources:
       SupportDescription: "Support Description"
       ProvisioningArtifactParameters:
       -
-        Description: "June 2018"
-        Name: "June 2018"
-        Info: 
+        Description: "Dec 2019"
+        Name: "Dec 2019"
+        Info:
           LoadTemplateFromURL : "https://raw.githubusercontent.com/aws-samples/aws-service-catalog-reference-architectures/master/ec2/sc-ec2-windows-ra.json"
 
   VPCProduct:
@@ -132,8 +132,8 @@ Resources:
       SupportDescription: "Support Description"
       ProvisioningArtifactParameters:
       -
-        Description: "June 2018"
-        Name: "June 2018"
+        Description: "Dec 2019"
+        Name: "Dec 2019"
         Info:
           LoadTemplateFromURL : "https://raw.githubusercontent.com/aws-samples/aws-service-catalog-reference-architectures/master/vpc/sc-vpc-ra.json"
 
@@ -150,10 +150,28 @@ Resources:
       SupportDescription: "Support Description"
       ProvisioningArtifactParameters:
       -
-        Description: "June 2018"
-        Name: "June 2018"
-        Info: 
+        Description: "Dec 2019"
+        Name: "Dec 2019"
+        Info:
           LoadTemplateFromURL: "https://raw.githubusercontent.com/aws-samples/aws-service-catalog-reference-architectures/master/emr/sc-emr-ra.json"
+
+  SageMakerProduct:
+    Type: "AWS::ServiceCatalog::CloudFormationProduct"
+    Properties:
+      AcceptLanguage: "en"
+      Description: "This template demonstrates the creation of a SageMaker NotebookInstance with encryption. You will be billed for the AWS resources used if you create a stack from this template."
+      Distributor: "Amazon"
+      Name: "SageMaker NoteBook"
+      Owner: "IT Services"
+      SupportEmail: "support@yourcompany.com"
+      SupportUrl: "https://www.amazon.com"
+      SupportDescription: "Support Description"
+      ProvisioningArtifactParameters:
+      -
+        Description: "Dec 2019"
+        Name: "Dec 2019"
+        Info:
+          LoadTemplateFromURL: "https://aws-service-catalog-reference-architectures.s3.amazonaws.com/sagemaker/sc-sagemaker.yml"
 
   RDSMySQLProduct:
     Type: "AWS::ServiceCatalog::CloudFormationProduct"
@@ -168,9 +186,9 @@ Resources:
       SupportDescription: "Support Description"
       ProvisioningArtifactParameters:
       -
-        Description: "June 2018"
-        Name: "June 2018"
-        Info: 
+        Description: "Dec 2019"
+        Name: "Dec 2019"
+        Info:
           LoadTemplateFromURL: "https://raw.githubusercontent.com/aws-samples/aws-service-catalog-reference-architectures/master/rds/sc-rds-mssql-ra.json"
 
   RDSMariaDBProduct:
@@ -186,9 +204,9 @@ Resources:
       SupportDescription: "Support Description"
       ProvisioningArtifactParameters:
       -
-        Description: "June 2018"
-        Name: "June 2018"
-        Info: 
+        Description: "Dec 2019"
+        Name: "Dec 2019"
+        Info:
           LoadTemplateFromURL: "https://raw.githubusercontent.com/aws-samples/aws-service-catalog-reference-architectures/master/rds/sc-rds-mariadb-ra.json"
 
   RDSPostGreSqlProduct:
@@ -204,9 +222,9 @@ Resources:
       SupportDescription: "Support Description"
       ProvisioningArtifactParameters:
       -
-        Description: "June 2018"
-        Name: "June 2018"
-        Info: 
+        Description: "Dec 2019"
+        Name: "Dec 2019"
+        Info:
           LoadTemplateFromURL: "https://raw.githubusercontent.com/aws-samples/aws-service-catalog-reference-architectures/master/rds/sc-rds-postgresql-ra.json"
 
   S3BucketProduct:
@@ -222,15 +240,22 @@ Resources:
       SupportDescription: "Support Description"
       ProvisioningArtifactParameters:
       -
-        Description: "June 2018"
-        Name: "June 2018"
+        Description: "Dec 2019"
+        Name: "Dec 2019"
         Info:
           LoadTemplateFromURL: "https://raw.githubusercontent.com/aws-samples/aws-service-catalog-reference-architectures/master/s3/sc-s3-cidr-ra.json"
 
   BaselinePortfolio:
     Type: "AWS::ServiceCatalog::Portfolio"
     Properties:
-      DisplayName: "FirstPortfolio"
+      DisplayName: "Baseline-Portfolio"
+      AcceptLanguage: "en"
+      ProviderName: "Amazon"
+
+  DataScientistPortfolio:
+    Type: "AWS::ServiceCatalog::Portfolio"
+    Properties:
+      DisplayName: "DataScientist-Portfolio"
       AcceptLanguage: "en"
       ProviderName: "Amazon"
 
@@ -242,7 +267,7 @@ Resources:
 
   LinuxConstraint:
     Type: AWS::ServiceCatalog::LaunchRoleConstraint
-    Properties: 
+    Properties:
       AcceptLanguage: "en"
       Description: "Launch Constraint for this AWS Service Catalog product"
       PortfolioId: !Ref BaselinePortfolio
@@ -257,7 +282,7 @@ Resources:
 
   WindowsConstraint:
     Type: AWS::ServiceCatalog::LaunchRoleConstraint
-    Properties: 
+    Properties:
       AcceptLanguage: "en"
       Description: "Launch Constraint for this AWS Service Catalog product"
       PortfolioId: !Ref BaselinePortfolio
@@ -272,7 +297,7 @@ Resources:
 
   VPCConstraint:
     Type: AWS::ServiceCatalog::LaunchRoleConstraint
-    Properties: 
+    Properties:
       AcceptLanguage: "en"
       Description: "Launch Constraint for this AWS Service Catalog product"
       PortfolioId: !Ref BaselinePortfolio
@@ -283,15 +308,31 @@ Resources:
      Type: "AWS::ServiceCatalog::PortfolioProductAssociation"
      Properties:
        ProductId: !Ref EMRProduct
-       PortfolioId: !Ref BaselinePortfolio
+       PortfolioId: !Ref DataScientistPortfolio
 
   EMRConstraint:
     Type: AWS::ServiceCatalog::LaunchRoleConstraint
-    Properties: 
+    Properties:
       AcceptLanguage: "en"
       Description: "Launch Constraint for this AWS Service Catalog product"
-      PortfolioId: !Ref BaselinePortfolio
+      PortfolioId: !Ref DataScientistPortfolio
       ProductId: !Ref EMRProduct
+      RoleArn: !GetAtt SCEC2LaunchRole.Arn
+
+  SageMakerAssociation:
+     Type: "AWS::ServiceCatalog::PortfolioProductAssociation"
+     Properties:
+       ProductId: !Ref SageMakerProduct
+       PortfolioId: !Ref DataScientistPortfolio
+
+  SageMakerConstraint:
+    Type: AWS::ServiceCatalog::LaunchRoleConstraint
+    DependsOn: SageMakerAssociation
+    Properties:
+      AcceptLanguage: "en"
+      Description: "Launch Constraint for this AWS Service Catalog product"
+      PortfolioId: !Ref DataScientistPortfolio
+      ProductId: !Ref SageMakerProduct
       RoleArn: !GetAtt SCEC2LaunchRole.Arn
 
   RDSMySQLAssociation:
@@ -302,7 +343,7 @@ Resources:
 
   RDSConstraint:
     Type: AWS::ServiceCatalog::LaunchRoleConstraint
-    Properties: 
+    Properties:
       AcceptLanguage: "en"
       Description: "Launch Constraint for this AWS Service Catalog product"
       PortfolioId: !Ref BaselinePortfolio
@@ -317,7 +358,7 @@ Resources:
 
   RDSMariaDBConstraint:
     Type: AWS::ServiceCatalog::LaunchRoleConstraint
-    Properties: 
+    Properties:
       AcceptLanguage: "en"
       Description: "Launch Constraint for this AWS Service Catalog product"
       PortfolioId: !Ref BaselinePortfolio
@@ -332,7 +373,7 @@ Resources:
 
   RDSPOSTGRESQLConstraint:
     Type: AWS::ServiceCatalog::LaunchRoleConstraint
-    Properties: 
+    Properties:
       AcceptLanguage: "en"
       Description: "Launch Constraint for this AWS Service Catalog product"
       PortfolioId: !Ref BaselinePortfolio
@@ -347,7 +388,7 @@ Resources:
 
   S3BucketConstraint:
     Type: AWS::ServiceCatalog::LaunchRoleConstraint
-    Properties: 
+    Properties:
       AcceptLanguage: "en"
       Description: "Launch Constraint for this AWS Service Catalog product"
       PortfolioId: !Ref BaselinePortfolio
@@ -359,4 +400,11 @@ Resources:
     Properties:
       PrincipalARN: !GetAtt ServiceCatalogUser.Arn
       PortfolioId: !Ref BaselinePortfolio
+      PrincipalType: IAM
+
+  PortfolioPrincipalAssociationforDataScientist:
+    Type: "AWS::ServiceCatalog::PortfolioPrincipalAssociation"
+    Properties:
+      PrincipalARN: !GetAtt ServiceCatalogUser.Arn
+      PortfolioId: !Ref DataScientistPortfolio
       PrincipalType: IAM

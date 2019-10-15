@@ -26,10 +26,14 @@ This approach of bootstrapping accounts will reduce operational overhead and sta
 
 ### A) Setup the account vending machine (AVM)
 As a part of creating a sample account vending machine from this repository, you will first launch a CloudFormation template to create the account vending machine set up in your account.
-1. Login to your AWS account which is a **master account** in AWS Organizations. 
+1. Login to your AWS account which is a **master account** in AWS Organizations. Select one the following 4 regions from the top right corner on the AWS Management Console:
+    - Ohio (us-east-2)
+    - Oregon (us-west-2)
+    - Ireland (eu-west-1)
+    - Singapore (ap-southeast-1)
 _Note: You can customize this implementation to work with linked accounts as well, but for the purposes of this exercise, we will use the master account._
 2. Click on the `Launch Stack` image below this sentence to launch a Cloudformation template that will setup the required infrastructure for account vending machine in your AWS account.
-[![Launch Stack](/resources/images/launch-stack.svg)](https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=account-vending-infrastructure-setup&templateURL=https://awsmpsa-reinvent-2019.s3.us-east-2.amazonaws.com/AccountCreationLambdaSetup-cfn.yaml)
+[![Launch Stack](/resources/images/launch-stack.svg)](https://mpsa-reinvent19-us-east-2.s3.us-east-2.amazonaws.com/AccountCreationLambdaSetup-cfn.yaml)
 3. On the `Create Stack` page, click `Next`.
 4. On the `Specify stack details` page, enter the following parameters:
 	- `AccountAdministrator` - Enter the ARN of the IAM entity (role or user or group) that will be performing account creation from AWS Service Catalog. You can go to the IAM console to find the ARN of the role/user/group. (eg. arn:aws:iam::010010011111:role/Administrator)

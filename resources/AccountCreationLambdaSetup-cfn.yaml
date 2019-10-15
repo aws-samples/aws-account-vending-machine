@@ -10,12 +10,12 @@ Parameters:
   SourceBucket:
     Description: "Bucket name of the S3 bucket holding all the files for the Account Vending Machine set up"
     Type: String
-    Default: "awsmpsa-reinvent-2019"
+    Default: "mpsa-reinvent19"
 
   SourceTemplate:
     Description: "Enter the template URL for the cloudformation template to launch account creation"
     Type: String
-    Default: "https://s3.amazonaws.com/awsmpsa-reinvent-2019/accountbuilder.yml"
+    Default: "https://mpsa-reinvent19-us-east-2.s3.us-east-2.amazonaws.com/accountbuilder.yml"
 
   AccountAdministrator:
     Description: "Enter the ARN of the IAM entity (role or user or group) that will be performing account creation from AWS Service Catalog"
@@ -34,7 +34,9 @@ Resources:
       TracingConfig:
           Mode: "Active"
       Code:
-        S3Bucket: !Ref SourceBucket
+        S3Bucket: !Sub
+          - ${Bucket}-${AWS::Region}
+          - { Bucket: !Ref SourceBucket }
         S3Key: "AccountCreationLambda.zip"
 
   LambdaExecuteRole:
