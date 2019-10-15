@@ -20,7 +20,7 @@ The account builder is an AWS Service Catalog product that uses AWS Lambda and A
 
 This approach of bootstrapping accounts will reduce operational overhead and standardize account configurations across the provisioned AWS accounts. The following architecture outlines the process flow involved with account building :
 
-![AVM-Architecture](/resources/images/avm-architecture.png)
+![AVM-Architecture](/resources/images/avm-architecture-dark.png)
 
 ## Step by Step walkthrough
 
