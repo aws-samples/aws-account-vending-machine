@@ -1,0 +1,85 @@
+# /*
+#  * Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#  *
+#  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
+#  * software and associated documentation files (the "Software"), to deal in the Software
+#  * without restriction, including without limitation the rights to use, copy, modify,
+#  * merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+#  * permit persons to whom the Software is furnished to do so.
+#  *
+#  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+#  * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+#  * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+#  * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+#  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+#  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#  */
+
+
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: New GovCloud Account Baseline (fdp-1qjtom7jr)
+Metadata:
+  'AWS::CloudFormation::Interface':
+    ParameterGroups:
+      - Label:
+          default: Parameters for account to Onboard
+        Parameters:
+          - AccountId
+
+Parameters:
+  AccountId:
+    Description: "Account ID of the new account to be bootstrapped"
+    Type: String
+    AllowedPattern: ".+"
+    ConstraintDescription: "Must be a 12 digit account number in GovCloud set up by Organizations"
+  StackRegion:
+    Description: "Region for deploying the baseline template in the vended account"
+    Default: "us-gov-west-1"
+    Type: String
+    AllowedPattern: ".+"
+    AllowedValues: ["us-gov-west-1","us-gov-east-1"]
+    ConstraintDescription: "Must be a valid AWS GovCloud(US) region"
+  SourceBucket:
+    Description: "Name of the S3 bucket holding the baseline template file"
+    Type: String
+  BaselineTemplate:
+    Description: "Baseline template to be deployed in the vended account."
+    Type: String
+    Default: "Accountbaseline.yml"
+  AssumeRoleName:
+    Description: "Rolename to be assumed in the child account."
+    Type: String
+    Default: "OrganizationAccountAccessRole"
+
+Resources:
+  TriggerLambda:
+    Type: "Custom::TriggerLambda"
+    Properties:
+      ServiceToken: !ImportValue AccountBootstrapLambda
+      AccountNumber : !Ref AccountId
+      CentralS3Bucket: !Ref SourceBucket
+      StackName : 'avm-baseline-stack'
+      StackRegion : !Ref StackRegion
+      ServiceCatalogUserName : 'service-catalog-user'
+      ServiceCatalogUserPassword : 'service-catalog-2020' 
+      ChildTemplateS3Url: !Ref BaselineTemplate
+      AssumeRoleName: !Ref AssumeRoleName
+
+
+Outputs:
+  Message:
+    Description: Execution Status
+    Value: !GetAtt 'TriggerLambda.Message'
+  AccountID:
+    Description: AWS Account ID of the newly vended account
+    Value: !GetAtt 'TriggerLambda.AccountID'
+  Username:
+    Description: Username of IAM user created in the newly vended account
+    Value: !GetAtt 'TriggerLambda.Username'
+  LoginURL:
+    Description: Login URL for the newly vended account
+    Value: !GetAtt 'TriggerLambda.LoginURL'
+  
+
+

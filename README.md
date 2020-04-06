@@ -2,6 +2,8 @@
 
 This repository contains various versions of the account vending machine used to provision AWS accounts with custom configurations.
 
+### Note
+For **AWS GovCloud(US) account vending**, click [here](/govcloud/README.md).
 ## Overview
 As an organization expands its use of AWS services, there is often a conversation about the need to create multiple AWS accounts to ensure separation of business processes or for security, compliance, and billing. Many of the customers we work with use separate AWS accounts for each business unit so they can meet the different needs of their organization. Although creating multiple accounts has simplified operational issues and provided benefits like security and resource isolation, a smaller blast radius, and simplified billing, it takes a lot of time to create, bootstrap and configure baseline settings. Customers want to manage account creation and bootstrapping in a scalable and efficient manner so that new accounts are created with a defined baseline and some governance guardrails are in place. Most importantly, customers want automation, to save time and resources.
 

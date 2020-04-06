@@ -1,0 +1,73 @@
+# /*
+#  * Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#  *
+#  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
+#  * software and associated documentation files (the "Software"), to deal in the Software
+#  * without restriction, including without limitation the rights to use, copy, modify,
+#  * merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+#  * permit persons to whom the Software is furnished to do so.
+#  *
+#  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+#  * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+#  * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+#  * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+#  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+#  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#  */
+
+
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: Account Builder Template. (fdp-1qjtoo67i)
+Metadata:
+  'AWS::CloudFormation::Interface':
+    ParameterGroups:
+      - Label:
+          default: Parameters for the new account
+        Parameters:
+          - accountemail
+          - organizationunitname
+          - accountname
+
+Parameters:
+  accountemail:
+    Description: "Account Email address"
+    Type: String
+    AllowedPattern: ".+"
+    ConstraintDescription: "Must provide a valid email address"
+
+  accountname:
+    Description: "Name of the new AWS Account Name"
+    Type: String
+    AllowedPattern: ".+"
+    ConstraintDescription: "Provide the account name"
+
+  organizationunitname:
+    Description: "Name of the organization unit to which the account should be moved to.  If its a new OU, we will create it for you"
+    Type: String
+    Default: "destination_ou"
+    AllowedPattern: ".+"
+
+Resources:
+  TriggerLambda:
+    Type: "Custom::TriggerLambda"
+    Properties:
+      ServiceToken: !ImportValue AccountBuilderLambda
+      'accountemail' : !Ref accountemail
+      'accountname' : !Ref accountname
+      'organizationunitname': !Ref 'organizationunitname'
+
+
+Outputs:
+  Message:
+    Description: Execution Status
+    Value: !GetAtt 'TriggerLambda.Message'
+
+  AccountID:
+    Description: ID of the new account
+    Value: !GetAtt 'TriggerLambda.AccountID'
+
+  GovCloudAccountId:
+    Description: ID of the new account
+    Value: !GetAtt 'TriggerLambda.GovCloudAccountId'
+
