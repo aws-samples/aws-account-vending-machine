@@ -79,7 +79,7 @@ _Note: You can customize this implementation to work with linked accounts as wel
 	- `AccountAdministrator` -  Enter the ARN of the IAM entity (role or user or group) that will be performing account creation from AWS Service Catalog. You can go to the IAM console to find the ARN of the role/user/group. (eg. arn:aws:iam::010010011111:role/Administrator)
 	- `StackName` - Enter a stack name such as `account-vending-machine`
 	- `SourceBucket` - Add the name of the Amazon S3 bucket you created in the commercial region
-	- `AccountVendingLambdaZip` - Keep the Default Value for this solution
+	- `AccountVendingLambdaZip` - File name of the zipped lambda function for Account Bootstrap Product.(Must be in the S3 bucket mentioned above)
 	- `SourceTemplate` - Add your Amazon S3 URL for the source template. 
 	- ![screen](images/commercial-params.png)
 8. On the `Configure stack options` page, click `Next`.
