@@ -233,13 +233,6 @@ def get_ou_name_id(root_id,organization_unit_name):
 
     return(organization_unit_name,organization_unit_id)
 
-def selfinvoke(event,status):
-    lambda_client = boto3.client('lambda')
-    function_name = os.environ['AWS_LAMBDA_FUNCTION_NAME']
-    event['RequestType'] = status
-    print('invoking itself ' + function_name)
-    response = lambda_client.invoke(FunctionName=function_name, InvocationType='Event',Payload=json.dumps(event))
-
 def respond_cloudformation(event, status, data=None):
     responseBody = {
         'Status': status,
@@ -292,7 +285,6 @@ def main(event,context):
     scp = None
 
     if (event['RequestType'] == 'Create'):
-        selfinvoke(event,'Wait')
         top_level_account = event['ServiceToken'].split(':')[4]
         print("The top level account is "+top_level_account)
         org_client = get_client('organizations')
