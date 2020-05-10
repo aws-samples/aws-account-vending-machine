@@ -233,6 +233,28 @@ def get_ou_name_id(root_id,organization_unit_name):
 
     return(organization_unit_name,organization_unit_id)
 
+def move_account(client, root_id, ou_id, account_id):
+    #Examine if it was already there then behave respectedly
+    list_of_account_ids = []
+    list_of_account_names = []
+    list_of_accounts_response = client.list_accounts_for_parent(ParentId=ou_id)
+    for i in list_of_accounts_response['Accounts']:
+        list_of_account_ids.append(i['Id'])
+        list_of_account_names.append(i['Name'])
+    if(account_id not in list_of_account_ids):
+        try:
+            move_response = client.move_account(
+                AccountId=account_id,
+                SourceParentId=root_id,
+                DestinationParentId=ou_id
+            )
+        except:
+            e = sys.exc_info()
+            print(e)
+    else:
+        move_response = 'Account was already there. Nothing to do'
+    return(move_response)
+
 def respond_cloudformation(event, status, data=None):
     responseBody = {
         'Status': status,
@@ -306,6 +328,21 @@ def main(event,context):
             except:
                 print("Error creating new account..")
                 sys.exit(0)
+
+            #Move account to OU if any
+            #Also create that OU when that was not yet present
+            if isinstance(organization_unit_name, str) and organization_unit_name != 'None':
+                try:
+                    print("Moving account: " + root_id + " -> " + organization_unit_name)
+                    (ou_name,ou_id) = get_ou_name_id(root_id,organization_unit_name)
+                    print("Specified OU: {} {}\n".format(ou_id,ou_name))
+                    move_response = move_account(org_client,root_id,ou_id,account_id)
+                    print("Account was moved successfully {}".format(move_response))
+                except:
+                    e = sys.exc_info()
+                    print(e)
+            else:
+                print( "Account {} is remaining under root {} ".format(account_id,root_id))
 
             #Create resources in the newly vended account
             try:
