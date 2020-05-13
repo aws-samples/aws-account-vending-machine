@@ -199,7 +199,7 @@ def assume_role(account_id, account_role):
     # credentials that can be used to make subsequent API calls
     return assumedRoleObject['Credentials']
 
-def get_ou_name_id(root_id,organization_unit_name):
+def get_ou_name_id(event, root_id,organization_unit_name):
 
     ou_client = get_client('organizations')
     list_of_OU_ids = []
@@ -309,6 +309,14 @@ def main(event,context):
 
             #Create resources in the newly vended account
             try:
+                #Move account to OU provided
+                if(organization_unit_name!='None'):
+                    try:
+                        (organization_unit_name,organization_unit_id) = get_ou_name_id(event, root_id,organization_unit_name)
+                        move_response = org_client.move_account(AccountId=account_id,SourceParentId=root_id,DestinationParentId=organization_unit_id)
+                    except botocore.exceptions.ClientError as e:
+                        print("An error occured. Org account move response: {} . Error Stack: {}".format(move_response, e))
+                        sys.exit(0)
                 credentials = assume_role(account_id, accountrole)
                 template = get_template(sourcebucket,baselinetemplate)
 
@@ -330,7 +338,7 @@ def main(event,context):
                         i+=1
                 respond_cloudformation(event, "SUCCESS", { "Message": "Account created successfully", "AccountID" : account_id, "LoginURL" : "https://" +account_id+".signin.aws.amazon.com/console", "Username" : ServiceCatalogUserName })
             except botocore.exceptions.ClientError as e:
-                print("An error occured: {}. Error Stack: {}".format(r,e))
+                print("An error occured. Error Stack: {}".format(e))
                 sys.exit(0)
 
     if(event['RequestType'] == 'Update'):
