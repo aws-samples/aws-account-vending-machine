@@ -8,9 +8,9 @@ def get_client(service):
   client = boto3.client(service)
   return client
 
-#list_organizational_units_for_parent supporting NextToken
+#list_organizational_units_for_parent handling NextToken
 #https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/organizations.html#Organizations.Client.list_organizational_units_for_parent
-def list_organizational_units_reduce(ParentId, NextToken=None, previous={'OrganizationalUnits': []}):
+def list_organizational_units_reduce(ParentId, NextToken=None, current={'OrganizationalUnits': []}):
 
   kwargs = {'NextToken': NextToken} if NextToken else {}
 
@@ -19,16 +19,16 @@ def list_organizational_units_reduce(ParentId, NextToken=None, previous={'Organi
       ParentId=ParentId,
       **kwargs
     )
-    previous.get('OrganizationalUnits').extend(page.get('OrganizationalUnits'))
+    current.get('OrganizationalUnits').extend(page.get('OrganizationalUnits'))
   except:
     print(sys.exc_info())
     print('Error: something is wrong. Result may possibly be incomplete')
-    return previous
+    return current
 
   if page.get('NextToken') is None:
-    return previous
+    return current
   else:
-    return list_organizational_units_reduce(ParentId, page['NextToken'], previous)
+    return list_organizational_units_reduce(ParentId, page.get('NextToken'), current)
 
 
 list_roots_response = get_client('organizations').list_roots()
