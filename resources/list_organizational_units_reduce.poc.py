@@ -3,7 +3,7 @@ import boto3
 import json
 import sys
 
-def list_organizational_units_reduce(ParentId, NextToken=None, previous=[]):
+def list_organizational_units_reduce(ParentId, NextToken=None, previous={'OrganizationalUnits': []}):
 
   kwargs = {'NextToken': NextToken} if NextToken else {}
 
@@ -12,7 +12,7 @@ def list_organizational_units_reduce(ParentId, NextToken=None, previous=[]):
       ParentId=ParentId,
       **kwargs
     )
-    previous.extend(page.get('OrganizationalUnits'))
+    previous.get('OrganizationalUnits').extend(page.get('OrganizationalUnits'))
   except:
     print(sys.exc_info())
     print('Error: something is wrong. Result may possibly be incomplete')
