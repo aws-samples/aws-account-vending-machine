@@ -10,7 +10,7 @@ def get_client(service):
 
 #list_organizational_units_for_parent handling NextToken
 #https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/organizations.html#Organizations.Client.list_organizational_units_for_parent
-def list_organizational_units_reduce(ParentId, NextToken=None, current={'OrganizationalUnits': []}):
+def list_organizational_units(ParentId, NextToken=None, current={'OrganizationalUnits': []}):
 
   kwargs = {'NextToken': NextToken} if NextToken else {}
 
@@ -28,11 +28,11 @@ def list_organizational_units_reduce(ParentId, NextToken=None, current={'Organiz
   if page.get('NextToken') is None:
     return current
   else:
-    return list_organizational_units_reduce(ParentId, page.get('NextToken'), current)
+    return list_organizational_units(ParentId, page.get('NextToken'), current)
 
 
 list_roots_response = get_client('organizations').list_roots()
 root_id = list_roots_response['Roots'][0]['Id']
 
-ous = list_organizational_units_reduce(root_id)
+ous = list_organizational_units(root_id)
 print(json.dumps(ous, indent=2))
