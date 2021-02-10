@@ -62,7 +62,7 @@ Resources:
       StackName : 'avm-baseline-stack'
       StackRegion : !Ref StackRegion
       ServiceCatalogUserName : 'service-catalog-user'
-      ServiceCatalogUserPassword : 'service-catalog-2020' 
+      ServiceCatalogUserPassword : 'Service-catalog-2020!' 
       ChildTemplateS3Url: !Ref BaselineTemplate
       AssumeRoleName: !Ref AssumeRoleName
 
