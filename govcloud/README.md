@@ -67,6 +67,21 @@ _Note: You can customize this implementation to work with linked accounts as wel
 							"aws:PrincipalOrgID": "<REPLACE WITH YOUR AWS ORGANIZATION ID>"
 						}
 					}
+				},
+				{
+					"Sid": "AllowSSLRequestsOnly",
+					"Effect": "Deny",
+					"Principal": "*",
+					"Action": "s3:*",
+					"Resource": [
+						"arn:aws:s3:::<REPLACE WITH YOUR AMAZON S3 BUCKET NAME>",
+						"arn:aws:s3:::<REPLACE WITH YOUR AMAZON S3 BUCKET NAME>/*"
+					],
+					"Condition": {
+						"Bool": {
+							aws:SecureTransport: false
+						}
+					}					
 				}
 			]
 		}
@@ -119,6 +134,21 @@ _Note: You can customize this implementation to work with linked accounts as wel
 							"aws:PrincipalOrgID": "<REPLACE WITH YOUR AWS ORGANIZATION ID>"
 						}
 					}
+				},
+				{
+					"Sid": "AllowSSLRequestsOnly",
+					"Effect": "Deny",
+					"Principal": "*",
+					"Action": "s3:*",
+					"Resource": [
+						"arn:aws-us-gov:s3:::<REPLACE WITH YOUR AMAZON S3 BUCKET NAME>",
+						"arn:aws-us-gov:s3:::<REPLACE WITH YOUR AMAZON S3 BUCKET NAME>/*"
+					],
+					"Condition": {
+						"Bool": {
+							aws:SecureTransport: false
+						}
+					}					
 				}
 			]
 		}
@@ -192,7 +222,7 @@ In this section, we will log in to the newly vended account using the user creat
 2. **Make sure you change over to the same region as the `StackRegion` in the previous section.**
 3. On the credentials page, enter the following information:
 	- Username: `service-catalog-user`
-	- Password: `service-catalog-2020`
+	- Password: `Service-catalog-2020!`
 	_Note: You will be prompted to change your password at first log in._
 4. On the Services menu, search and then choose [AWS Service Catalog](https://console.amazonaws-us-gov.com/servicecatalog/home). On the products list page, you will be to see the pre-configured AWS Service Catalog products allowed for the current user to provision.
 ![end-user](images/end-user.png)
