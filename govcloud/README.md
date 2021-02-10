@@ -67,6 +67,21 @@ _Note: You can customize this implementation to work with linked accounts as wel
 							"aws:PrincipalOrgID": "<REPLACE WITH YOUR AWS ORGANIZATION ID>"
 						}
 					}
+				},
+				{
+					"Sid": "AllowSSLRequestsOnly",
+					"Effect": "Deny",
+					"Principal": "*",
+					"Action": "s3:*",
+					"Resource": [
+						"arn:aws:s3:::<REPLACE WITH YOUR AMAZON S3 BUCKET NAME>",
+						"arn:aws:s3:::<REPLACE WITH YOUR AMAZON S3 BUCKET NAME>/*"
+					],
+					"Condition": {
+						"Bool": {
+							aws:SecureTransport: false
+						}
+					}					
 				}
 			]
 		}
@@ -119,6 +134,21 @@ _Note: You can customize this implementation to work with linked accounts as wel
 							"aws:PrincipalOrgID": "<REPLACE WITH YOUR AWS ORGANIZATION ID>"
 						}
 					}
+				},
+				{
+					"Sid": "AllowSSLRequestsOnly",
+					"Effect": "Deny",
+					"Principal": "*",
+					"Action": "s3:*",
+					"Resource": [
+						"arn:aws-us-gov:s3:::<REPLACE WITH YOUR AMAZON S3 BUCKET NAME>",
+						"arn:aws-us-gov:s3:::<REPLACE WITH YOUR AMAZON S3 BUCKET NAME>/*"
+					],
+					"Condition": {
+						"Bool": {
+							aws:SecureTransport: false
+						}
+					}					
 				}
 			]
 		}
