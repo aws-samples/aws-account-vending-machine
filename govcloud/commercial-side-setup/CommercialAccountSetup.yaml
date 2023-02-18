@@ -33,7 +33,7 @@ Resources:
     DependsOn: LambdaExecuteRole
     Properties:
       Handler: "AccountCreationLambda.lambda_handler"
-      Runtime: "python3.6"
+      Runtime: "python3.9"
       Role: !GetAtt LambdaExecuteRole.Arn
       Timeout: 800
       TracingConfig:
