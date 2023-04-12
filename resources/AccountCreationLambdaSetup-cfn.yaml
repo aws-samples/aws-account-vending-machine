@@ -35,7 +35,8 @@ Resources:
           Mode: "Active"
       Code:
         S3Bucket: !Sub
-          - ${Bucket}-${AWS::Region}
+          #- ${Bucket}-${AWS::Region}
+          - ${Bucket}
           - { Bucket: !Ref SourceBucket }
         S3Key: "AccountCreationLambda.zip"
 
