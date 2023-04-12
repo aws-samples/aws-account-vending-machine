@@ -10,12 +10,14 @@ Parameters:
   SourceBucket:
     Description: "Bucket name of the S3 bucket holding all the files for the Account Vending Machine set up"
     Type: String
-    Default: "mpsa-reinvent19"
+    Default: "aws-samples-aws-account-vending-machine"
+    # Default: "mpsa-reinvent19"
 
   SourceTemplate:
     Description: "Enter the template URL for the cloudformation template to launch account creation"
     Type: String
-    Default: "https://mpsa-reinvent19-us-east-2.s3.us-east-2.amazonaws.com/accountbuilder.yml"
+    Default: "https://aws-samples-aws-account-vending-machine.s3.us-west-2.amazonaws.com/accountbuilder.yml"
+    # Default: "https://mpsa-reinvent19-us-east-2.s3.us-east-2.amazonaws.com/accountbuilder.yml"
 
   AccountAdministrator:
     Description: "Enter the ARN of the IAM entity (role or user or group) that will be performing account creation from AWS Service Catalog"
