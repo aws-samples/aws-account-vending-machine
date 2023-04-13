@@ -199,6 +199,28 @@ def assume_role(account_id, account_role):
     # credentials that can be used to make subsequent API calls
     return assumedRoleObject['Credentials']
 
+#list_organizational_units_for_parent handling NextToken
+#https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/organizations.html#Organizations.Client.list_organizational_units_for_parent
+def list_organizational_units(ParentId, NextToken=None, current={'OrganizationalUnits': []}):
+
+    kwargs = {'NextToken': NextToken} if NextToken else {}
+
+    try:
+        page = get_client('organizations').list_organizational_units_for_parent(
+            ParentId=ParentId,
+            **kwargs
+        )
+        current.get('OrganizationalUnits').extend(page.get('OrganizationalUnits'))
+    except:
+        print(sys.exc_info())
+        print('Error: something is wrong. Result may possibly be incomplete')
+        return current
+
+    if page.get('NextToken') is None:
+        return current
+    else:
+        return list_organizational_units(ParentId, page.get('NextToken'), current)
+
 def get_ou_name_id(event, root_id,organization_unit_name):
 
     ou_client = get_client('organizations')
@@ -206,7 +228,7 @@ def get_ou_name_id(event, root_id,organization_unit_name):
     list_of_OU_names = []
     ou_name_to_id = {}
 
-    list_of_OUs_response = ou_client.list_organizational_units_for_parent(ParentId=root_id)
+    list_of_OUs_response = list_organizational_units(ParentId=root_id)
 
     for i in list_of_OUs_response['OrganizationalUnits']:
         list_of_OU_ids.append(i['Id'])
