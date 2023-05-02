@@ -267,6 +267,7 @@ Resources:
 
   LinuxConstraint:
     Type: AWS::ServiceCatalog::LaunchRoleConstraint
+    DependsOn: EC2LinuxProduct
     Properties:
       AcceptLanguage: "en"
       Description: "Launch Constraint for this AWS Service Catalog product"
@@ -282,6 +283,7 @@ Resources:
 
   WindowsConstraint:
     Type: AWS::ServiceCatalog::LaunchRoleConstraint
+    DependsOn: EC2WindowsProduct
     Properties:
       AcceptLanguage: "en"
       Description: "Launch Constraint for this AWS Service Catalog product"
@@ -313,6 +315,7 @@ Resources:
 
   EMRConstraint:
     Type: AWS::ServiceCatalog::LaunchRoleConstraint
+    DependsOn: EMRProduct
     Properties:
       AcceptLanguage: "en"
       Description: "Launch Constraint for this AWS Service Catalog product"
@@ -344,6 +347,7 @@ Resources:
 
   RDSConstraint:
     Type: AWS::ServiceCatalog::LaunchRoleConstraint
+    DependsOn: RDSMySQLProduct
     Properties:
       AcceptLanguage: "en"
       Description: "Launch Constraint for this AWS Service Catalog product"
@@ -359,6 +363,7 @@ Resources:
 
   RDSMariaDBConstraint:
     Type: AWS::ServiceCatalog::LaunchRoleConstraint
+    DependsOn: RDSMariaDBProduct
     Properties:
       AcceptLanguage: "en"
       Description: "Launch Constraint for this AWS Service Catalog product"
@@ -374,6 +379,7 @@ Resources:
 
   RDSPOSTGRESQLConstraint:
     Type: AWS::ServiceCatalog::LaunchRoleConstraint
+    DependsOn: RDSPostGreSqlProduct
     Properties:
       AcceptLanguage: "en"
       Description: "Launch Constraint for this AWS Service Catalog product"
