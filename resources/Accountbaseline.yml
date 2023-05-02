@@ -297,6 +297,7 @@ Resources:
 
   VPCConstraint:
     Type: AWS::ServiceCatalog::LaunchRoleConstraint
+    DependsOn: VPCProduct
     Properties:
       AcceptLanguage: "en"
       Description: "Launch Constraint for this AWS Service Catalog product"
@@ -387,6 +388,7 @@ Resources:
        PortfolioId: !Ref BaselinePortfolio
 
   S3BucketConstraint:
+    DependsOn: S3BucketProduct
     Type: AWS::ServiceCatalog::LaunchRoleConstraint
     Properties:
       AcceptLanguage: "en"
