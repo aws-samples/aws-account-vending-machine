@@ -17,7 +17,7 @@ import argparse
 import os
 import urllib
 import json
-from botocore.vendored import requests
+import requests
 
 '''AWS Organizations Create Account and Provision Resources via CloudFormation
 
@@ -246,7 +246,7 @@ def respond_cloudformation(event, status, data=None):
 
     print('Response = ' + json.dumps(responseBody))
     print(event)
-    requests.put(event['ResponseURL'], data=json.dumps(responseBody))
+    requests.post(event['ResponseURL'], data=json.dumps(responseBody))
 
 def delete_respond_cloudformation(event, status, data=None):
     responseBody = {
@@ -265,7 +265,7 @@ def delete_respond_cloudformation(event, status, data=None):
     function_name = os.environ['AWS_LAMBDA_FUNCTION_NAME']
     print('Deleting Lambda')
     lambda_client.delete_function(FunctionName=function_name)
-    requests.put(event['ResponseURL'], data=json.dumps(responseBody))
+    requests.post(event['ResponseURL'], data=json.dumps(responseBody))
 
 def main(event,context):
     print(event)
