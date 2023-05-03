@@ -295,7 +295,7 @@ def main(event,context):
         except:
             root_id = "Error"
 
-        if root_id  is not "Error":
+        if root_id != "Error":
             try:
                 #Create new account
                 print("Creating new account: " + accountname + " (" + accountemail + ")")
