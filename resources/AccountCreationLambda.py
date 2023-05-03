@@ -108,14 +108,16 @@ def deploy_resources(credentials, template, stackname, stackregion, ServiceCatal
         Create a CloudFormation stack of resources within the new account
     '''
 
-    datestamp = time.strftime("%d/%m/%Y")
+    #datestamp = time.strftime("%d/%m/%Y %H:%M:%S")
     client = boto3.client('cloudformation',
                           aws_access_key_id=credentials['AccessKeyId'],
                           aws_secret_access_key=credentials['SecretAccessKey'],
                           aws_session_token=credentials['SessionToken'],
                           region_name=stackregion)
-    print("Deploying stack - " + stackname + " in " + account_id + "started at " + datestamp)
     time.sleep(120)
+    
+    print("Deploying stack - " + stackname + " in " + account_id + "started at " + time.strftime("%d/%m/%Y %H:%M:%S"))
+    
     creating_stack = True
     while creating_stack is True:
         try:
@@ -247,6 +249,7 @@ def respond_cloudformation(event, status, data=None):
     print('Response = ' + json.dumps(responseBody))
     print(event)
     requests.post(event['ResponseURL'], data=json.dumps(responseBody))
+    return True
 
 def delete_respond_cloudformation(event, status, data=None):
     responseBody = {
@@ -301,7 +304,7 @@ def main(event,context):
                 print("Creating new account: " + accountname + " (" + accountemail + ")")
                 (create_account_response,account_id) = create_account(accountname,accountemail,accountrole,access_to_billing,scp,root_id)
                 print(create_account_response)
-                print("Created account:{}\n".format(account_id))
+                print("Created account:{} at {} UTC \n".format(account_id,time.strftime("%d/%m/%Y %H:%M:%S")))
                 time.sleep(20)
             except:
                 print("Error creating new account..")
@@ -330,9 +333,12 @@ def main(event,context):
                 regions_response = ec2_client.describe_regions()
                 for i in range(0,len(regions_response['Regions'])):
                     regions.append(regions_response['Regions'][i]['RegionName'])
-                sleep(20)
+                time.sleep(60)
+                datestamp = time.strftime("%d/%m/%Y %H:%M:%S")
+                print(f"Deleting Default VPCs. Started at {datestamp} ")
                 for r in regions:
                     try:
+                        print(f"Deleting VPCs in [{regions.index(r)+1}/{len(regions)}] aws-regions")
                         delete_vpc_response = delete_default_vpc(credentials,r)
                     except botocore.exceptions.ClientError as e:
                         print("An error occured while deleting Default VPC in {}. Error: {}".format(r,e))
