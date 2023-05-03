@@ -310,6 +310,33 @@ def main(event,context):
             #Create resources in the newly vended account
             try:
                 #Move account to OU provided
+                # if(organization_unit_name!='None'):
+                #     try:
+                #         (organization_unit_name,organization_unit_id) = get_ou_name_id(event, root_id,organization_unit_name)
+                #         move_response = org_client.move_account(AccountId=account_id,SourceParentId=root_id,DestinationParentId=organization_unit_id)
+                #     except botocore.exceptions.ClientError as e:
+                #         print("An error occured. Org account move response: {} . Error Stack: {}".format(move_response, e))
+                #         sys.exit(0)
+                # credentials = assume_role(account_id, accountrole)
+                # template = get_template(sourcebucket,baselinetemplate)
+
+                # #deploy cloudformation template (AccountBaseline.yml)
+                # stack = deploy_resources(credentials, template, stackname, stackregion, ServiceCatalogUserName, ServiceCatalogUserPassword,account_id)
+                # print(stack)
+                # print("Baseline setup deployment for account " + account_id + " (" + accountemail + ") complete!")
+
+                #delete default vpc in every region
+                regions = []
+                regions_response = ec2_client.describe_regions()
+                for i in range(0,len(regions_response['Regions'])):
+                    regions.append(regions_response['Regions'][i]['RegionName'])
+                for r in regions:
+                    try:
+                        delete_vpc_response = delete_default_vpc(credentials,r)
+                    except botocore.exceptions.ClientError as e:
+                        print("An error occured while deleting Default VPC in {}. Error: {}".format(r,e))
+                        i+=1
+                
                 if(organization_unit_name!='None'):
                     try:
                         (organization_unit_name,organization_unit_id) = get_ou_name_id(event, root_id,organization_unit_name)
@@ -324,18 +351,7 @@ def main(event,context):
                 stack = deploy_resources(credentials, template, stackname, stackregion, ServiceCatalogUserName, ServiceCatalogUserPassword,account_id)
                 print(stack)
                 print("Baseline setup deployment for account " + account_id + " (" + accountemail + ") complete!")
-
-                #delete default vpc in every region
-                regions = []
-                regions_response = ec2_client.describe_regions()
-                for i in range(0,len(regions_response['Regions'])):
-                    regions.append(regions_response['Regions'][i]['RegionName'])
-                for r in regions:
-                    try:
-                        delete_vpc_response = delete_default_vpc(credentials,r)
-                    except botocore.exceptions.ClientError as e:
-                        print("An error occured while deleting Default VPC in {}. Error: {}".format(r,e))
-                        i+=1
+                
                 respond_cloudformation(event, "SUCCESS", { "Message": "Account created successfully", "AccountID" : account_id, "LoginURL" : "https://" +account_id+".signin.aws.amazon.com/console", "Username" : ServiceCatalogUserName })
             except botocore.exceptions.ClientError as e:
                 print("An error occured. Error Stack: {}".format(e))
