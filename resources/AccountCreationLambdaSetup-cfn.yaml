@@ -93,12 +93,12 @@ Resources:
       SupportEmail: "support@yourcompany.com"
       SupportUrl: "https://www.amazon.com"
       SupportDescription: "Support Description"
-      ProvisioningArtifactParameters:
-      -
-        Description: "March 2019"
-        Name: "March 2019 v1.0"
-        Info:
-          LoadTemplateFromURL : !Ref SourceTemplate
+      # ProvisioningArtifactParameters:
+      # -
+      #   Description: "March 2019"
+      #   Name: "March 2019 v1.0"
+      #   Info:
+      #     LoadTemplateFromURL : !Ref SourceTemplate
 
   AVMAssociation:
     Type: "AWS::ServiceCatalog::PortfolioProductAssociation"
