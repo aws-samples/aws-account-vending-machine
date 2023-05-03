@@ -114,7 +114,7 @@ def deploy_resources(credentials, template, stackname, stackregion, ServiceCatal
                           aws_secret_access_key=credentials['SecretAccessKey'],
                           aws_session_token=credentials['SessionToken'],
                           region_name=stackregion)
-    print("Creating stack " + stackname + " in " + account_id)
+    print("Deploying stack - " + stackname + " in " + account_id + "started at " + datestamp)
     time.sleep(120)
     creating_stack = True
     while creating_stack is True:
@@ -310,15 +310,15 @@ def main(event,context):
             #Create resources in the newly vended account
             try:
                 #Move account to OU provided
-                # if(organization_unit_name!='None'):
-                #     try:
-                #         (organization_unit_name,organization_unit_id) = get_ou_name_id(event, root_id,organization_unit_name)
-                #         move_response = org_client.move_account(AccountId=account_id,SourceParentId=root_id,DestinationParentId=organization_unit_id)
-                #     except botocore.exceptions.ClientError as e:
-                #         print("An error occured. Org account move response: {} . Error Stack: {}".format(move_response, e))
-                #         sys.exit(0)
-                # credentials = assume_role(account_id, accountrole)
-                # template = get_template(sourcebucket,baselinetemplate)
+                if(organization_unit_name!='None'):
+                    try:
+                        (organization_unit_name,organization_unit_id) = get_ou_name_id(event, root_id,organization_unit_name)
+                        move_response = org_client.move_account(AccountId=account_id,SourceParentId=root_id,DestinationParentId=organization_unit_id)
+                    except botocore.exceptions.ClientError as e:
+                        print("An error occured. Org account move response: {} . Error Stack: {}".format(move_response, e))
+                        sys.exit(0)
+                credentials = assume_role(account_id, accountrole)
+                template = get_template(sourcebucket,baselinetemplate)
 
                 # #deploy cloudformation template (AccountBaseline.yml)
                 # stack = deploy_resources(credentials, template, stackname, stackregion, ServiceCatalogUserName, ServiceCatalogUserPassword,account_id)
@@ -330,6 +330,7 @@ def main(event,context):
                 regions_response = ec2_client.describe_regions()
                 for i in range(0,len(regions_response['Regions'])):
                     regions.append(regions_response['Regions'][i]['RegionName'])
+                sleep(20)
                 for r in regions:
                     try:
                         delete_vpc_response = delete_default_vpc(credentials,r)
@@ -337,15 +338,15 @@ def main(event,context):
                         print("An error occured while deleting Default VPC in {}. Error: {}".format(r,e))
                         i+=1
                 
-                if(organization_unit_name!='None'):
-                    try:
-                        (organization_unit_name,organization_unit_id) = get_ou_name_id(event, root_id,organization_unit_name)
-                        move_response = org_client.move_account(AccountId=account_id,SourceParentId=root_id,DestinationParentId=organization_unit_id)
-                    except botocore.exceptions.ClientError as e:
-                        print("An error occured. Org account move response: {} . Error Stack: {}".format(move_response, e))
-                        sys.exit(0)
-                credentials = assume_role(account_id, accountrole)
-                template = get_template(sourcebucket,baselinetemplate)
+                # if(organization_unit_name!='None'):
+                #     try:
+                #         (organization_unit_name,organization_unit_id) = get_ou_name_id(event, root_id,organization_unit_name)
+                #         move_response = org_client.move_account(AccountId=account_id,SourceParentId=root_id,DestinationParentId=organization_unit_id)
+                #     except botocore.exceptions.ClientError as e:
+                #         print("An error occured. Org account move response: {} . Error Stack: {}".format(move_response, e))
+                #         sys.exit(0)
+                # credentials = assume_role(account_id, accountrole)
+                # template = get_template(sourcebucket,baselinetemplate)
 
                 #deploy cloudformation template (AccountBaseline.yml)
                 stack = deploy_resources(credentials, template, stackname, stackregion, ServiceCatalogUserName, ServiceCatalogUserPassword,account_id)
