@@ -108,7 +108,7 @@ def deploy_resources(credentials, template, stackname, stackregion, ServiceCatal
         Create a CloudFormation stack of resources within the new account
     '''
 
-    #datestamp = time.strftime("%d/%m/%Y %H:%M:%S")
+    datestamp = time.strftime("%d/%m/%Y %H:%M:%S")
     client = boto3.client('cloudformation',
                           aws_access_key_id=credentials['AccessKeyId'],
                           aws_secret_access_key=credentials['SecretAccessKey'],
