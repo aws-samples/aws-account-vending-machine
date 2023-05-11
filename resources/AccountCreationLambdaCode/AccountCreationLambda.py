@@ -242,7 +242,7 @@ def get_ou_name_id(event, root_id,organization_unit_name):
 
 def build_accounts_list(org_client,list_accounts_response,account_details):
     for account in range(0,len(list_accounts_response['Accounts'])):
-        if list_accounts_response['Accounts'][account]['Status'] == 'ACTIVE':
+        if(list_accounts_response['Accounts'][account]['Status'] == 'ACTIVE' or list_accounts_response['Accounts'][account]['Status'] == 'SUSPENDED' or list_accounts_response['Accounts'][account]['Status'] == 'PENDING_CLOSURE'):
             account_details[list_accounts_response['Accounts'][account]['Email']] = list_accounts_response['Accounts'][account]['Id']
     return account_details
     

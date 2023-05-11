@@ -62,6 +62,15 @@ Parameters:
     Type: String
     Default: "Accountbaseline.yml"
 
+  ServiceCatalogUserName:
+    Description: IAM user that will created in the newly vended account. Use this for logging into the newly vended account
+    Type: String
+
+  ServiceCatalogUserPassword:
+    Description: The password for the above provided ServiceCatalogUserName IAM user
+    Type: String
+    NoEcho: True
+
 Resources:
 
   TriggerAccountLambda:
@@ -74,8 +83,8 @@ Resources:
       OrganizationalUnitName: !Ref 'OrganizationalUnitName'
       StackName : 'avm-baseline-stack'
       StackRegion : !Ref StackRegion
-      ServiceCatalogUserName : 'service-catalog-user'
-      ServiceCatalogUserPassword : 'service-catalog-2019'
+      ServiceCatalogUserName : !Ref ServiceCatalogUserName
+      ServiceCatalogUserPassword : !Ref ServiceCatalogUserPassword
       SourceBucket : !Ref SourceBucket
       BaselineTemplate: !Ref BaselineTemplate
 
