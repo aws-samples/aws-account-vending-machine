@@ -8,7 +8,7 @@
 
 #!/usr/bin/env python
 
-from __future__ import print_function
+#from __future__ import print_function
 import boto3
 import botocore
 import time
@@ -17,7 +17,14 @@ import argparse
 import os
 import urllib
 import json
-import requests
+# import requests
+from crhelper import CfnResource
+import logging
+import cfnresponse
+
+logger = logging.getLogger(__name__)
+# Initialise the helper, all inputs are optional, this example shows the defaults
+helper = CfnResource(json_logging=False, log_level='DEBUG', boto_level='CRITICAL', sleep_on_delete=120, ssl_verify=None)
 
 '''AWS Organizations Create Account and Provision Resources via CloudFormation
 
@@ -41,8 +48,8 @@ def create_account(accountname,accountemail,accountrole,access_to_billing,scp,ro
                                                         RoleName=accountrole,
                                                         IamUserAccessToBilling=access_to_billing)
     except botocore.exceptions.ClientError as e:
-        print(e)
-        sys.exit(1)
+        logger.info(e)
+        #sys.exit(1)
     #time.sleep(30)
     create_account_status_response = client.describe_create_account_status(CreateAccountRequestId=create_account_response.get('CreateAccountStatus').get('Id'))
     account_id = create_account_status_response.get('CreateAccountStatus').get('AccountId')
@@ -56,14 +63,14 @@ def get_template(sourcebucket,baselinetemplate):
     '''
         Read a template file and return the contents
     '''
-    #print("Reading resources from " + templatefile)
+    #logger.info("Reading resources from " + templatefile)
     s3 = boto3.resource('s3')
     #obj = s3.Object('cf-to-create-lambda','5-newbaseline.yml')
     obj = s3.Object(sourcebucket,baselinetemplate)
     return obj.get()['Body'].read().decode('utf-8')
 
 def delete_default_vpc(credentials,currentregion):
-    #print("Default VPC deletion in progress in {}".format(currentregion))
+    #logger.info("Default VPC deletion in progress in {}".format(currentregion))
     ec2_client = boto3.client('ec2',
                           aws_access_key_id=credentials['AccessKeyId'],
                           aws_secret_access_key=credentials['SecretAccessKey'],
@@ -84,22 +91,22 @@ def delete_default_vpc(credentials,currentregion):
     for i in range(0,len(default_subnets)):
         subnet_delete_response.append(ec2_client.delete_subnet(SubnetId=default_subnets[i],DryRun=False))
 
-    #print("Default Subnets" + currentregion + "Deleted.")
+    #logger.info("Default Subnets" + currentregion + "Deleted.")
 
     igw_response = ec2_client.describe_internet_gateways()
     for i in range(0,len(igw_response['InternetGateways'])):
         for j in range(0,len(igw_response['InternetGateways'][i]['Attachments'])):
             if(igw_response['InternetGateways'][i]['Attachments'][j]['VpcId'] == default_vpcid):
                 default_igw = igw_response['InternetGateways'][i]['InternetGatewayId']
-    #print(default_igw)
+    #logger.info(default_igw)
     detach_default_igw_response = ec2_client.detach_internet_gateway(InternetGatewayId=default_igw,VpcId=default_vpcid,DryRun=False)
     delete_internet_gateway_response = ec2_client.delete_internet_gateway(InternetGatewayId=default_igw)
 
-    #print("Default IGW " + currentregion + "Deleted.")
+    #logger.info("Default IGW " + currentregion + "Deleted.")
 
     time.sleep(10)
     delete_vpc_response = ec2_client.delete_vpc(VpcId=default_vpcid,DryRun=False)
-    print("Deleted Default VPC in {}".format(currentregion))
+    logger.info("Deleted Default VPC in {}".format(currentregion))
     return delete_vpc_response
 
 def deploy_resources(credentials, template, stackname, stackregion, ServiceCatalogUserName, ServiceCatalogUserPassword,account_id):
@@ -116,7 +123,7 @@ def deploy_resources(credentials, template, stackname, stackregion, ServiceCatal
                           region_name=stackregion)
     time.sleep(120)
     
-    print("Deploying stack - " + stackname + " in " + account_id + "started at " + time.strftime("%d/%m/%Y %H:%M:%S"))
+    logger.info("Deploying stack - " + stackname + " in " + account_id + "started at " + time.strftime("%d/%m/%Y %H:%M:%S"))
     
     creating_stack = True
     while creating_stack is True:
@@ -153,13 +160,13 @@ def deploy_resources(credentials, template, stackname, stackregion, ServiceCatal
             )
         except botocore.exceptions.ClientError as e:
             creating_stack = True
-            print(e)
-            print("Retrying...")
+            logger.info(e)
+            logger.info("Retrying...")
             time.sleep(10)
 
     stack_building = True
-    print("Stack creation in process...")
-    print(create_stack_response)
+    logger.info("Stack creation in process...")
+    logger.info(create_stack_response)
     while stack_building is True:
         event_list = client.describe_stack_events(StackName=stackname).get("StackEvents")
         stack_event = event_list[0]
@@ -167,15 +174,15 @@ def deploy_resources(credentials, template, stackname, stackregion, ServiceCatal
         if (stack_event.get('ResourceType') == 'AWS::CloudFormation::Stack' and
            stack_event.get('ResourceStatus') == 'CREATE_COMPLETE'):
             stack_building = False
-            print("Stack construction complete.")
+            logger.info("Stack construction complete.")
         elif (stack_event.get('ResourceType') == 'AWS::CloudFormation::Stack' and
               stack_event.get('ResourceStatus') == 'ROLLBACK_COMPLETE'):
             stack_building = False
-            print("Stack construction failed.")
-            sys.exit(1)
+            logger.info("Stack construction failed.")
+            #sys.exit(1)
         else:
-            print(stack_event)
-            print("Stack building . . .")
+            logger.info(stack_event)
+            logger.info("Stack building . . .")
             time.sleep(10)
     stack = client.describe_stacks(StackName=stackname)
     return stack
@@ -193,8 +200,8 @@ def assume_role(account_id, account_role):
             )
         except botocore.exceptions.ClientError as e:
             assuming_role = True
-            print(e)
-            print("Retrying...")
+            logger.info(e)
+            logger.info("Retrying...")
             time.sleep(10)
 
     # From the response that contains the assumed role, get the temporary
@@ -215,7 +222,7 @@ def get_ou_name_id(event, root_id,organization_unit_name):
         list_of_OU_names.append(i['Name'])
 
     if(organization_unit_name not in list_of_OU_names):
-        print("The provided Organization Unit Name doesnt exist. Creating an OU named: {}".format(organization_unit_name))
+        logger.info("The provided Organization Unit Name doesnt exist. Creating an OU named: {}".format(organization_unit_name))
         try:
             ou_creation_response = ou_client.create_organizational_unit(ParentId=root_id,Name=organization_unit_name)
             for k,v in ou_creation_response.items():
@@ -225,7 +232,7 @@ def get_ou_name_id(event, root_id,organization_unit_name):
                     if(k1 == 'Id'):
                         organization_unit_id = v1
         except botocore.exceptions.ClientError as e:
-            print("Error in creating the OU: {}".format(e))
+            logger.info("Error in creating the OU: {}".format(e))
             respond_cloudformation(event, "FAILED", { "Message": "Could not list out AWS Organization OUs. Account creation Aborted."})
 
     else:
@@ -235,43 +242,52 @@ def get_ou_name_id(event, root_id,organization_unit_name):
 
     return(organization_unit_name,organization_unit_id)
 
-def respond_cloudformation(event, status, data=None):
-    responseBody = {
-        'Status': status,
-        'Reason': 'See the details in CloudWatch Log Stream',
-        'PhysicalResourceId': event['ServiceToken'],
-        'StackId': event['StackId'],
-        'RequestId': event['RequestId'],
-        'LogicalResourceId': event['LogicalResourceId'],
-        'Data': data
-    }
+# def respond_cloudformation(event, status, data=None):
+#     responseBody = {
+#         'Status': status,
+#         'Reason': 'See the details in CloudWatch Log Stream',
+#         'PhysicalResourceId': event['ServiceToken'],
+#         'StackId': event['StackId'],
+#         'RequestId': event['RequestId'],
+#         'LogicalResourceId': event['LogicalResourceId'],
+#         'Data': data
+#     }
 
-    print('Response = ' + json.dumps(responseBody))
-    print(event)
-    requests.post(event['ResponseURL'], data=json.dumps(responseBody))
-    return True
+#     logger.info('Response = ' + json.dumps(responseBody))
+#     logger.info(event)
+#     requests.post(event['ResponseURL'], data=json.dumps(responseBody))
+#     return True
 
-def delete_respond_cloudformation(event, status, data=None):
-    responseBody = {
-        'Status': status,
-        'Reason': 'See the details in CloudWatch Log Stream',
-        'PhysicalResourceId': event['ServiceToken'],
-        'StackId': event['StackId'],
-        'RequestId': event['RequestId'],
-        'LogicalResourceId': event['LogicalResourceId'],
-        'Data': data
-    }
+# def delete_respond_cloudformation(event, status, data=None):
+#     responseBody = {
+#         'Status': status,
+#         'Reason': 'See the details in CloudWatch Log Stream',
+#         'PhysicalResourceId': event['ServiceToken'],
+#         'StackId': event['StackId'],
+#         'RequestId': event['RequestId'],
+#         'LogicalResourceId': event['LogicalResourceId'],
+#         'Data': data
+#     }
 
-    print('Response = ' + json.dumps(responseBody))
-    print(event)
-    lambda_client = get_client('lambda')
-    function_name = os.environ['AWS_LAMBDA_FUNCTION_NAME']
-    print('Deleting Lambda')
-    lambda_client.delete_function(FunctionName=function_name)
-    requests.post(event['ResponseURL'], data=json.dumps(responseBody))
+#     logger.info('Response = ' + json.dumps(responseBody))
+#     logger.info(event)
+#     lambda_client = get_client('lambda')
+#     function_name = os.environ['AWS_LAMBDA_FUNCTION_NAME']
+#     logger.info('Deleting Lambda')
+#     lambda_client.delete_function(FunctionName=function_name)
+#     requests.post(event['ResponseURL'], data=json.dumps(responseBody))
 
-def main(event,context):
-    print(event)
+
+def build_accounts_list(org_client,list_accounts_response,account_details):
+    for account in range(0,len(list_accounts_response['Accounts'])):
+        if list_accounts_response['Accounts'][account]['Status'] == 'ACTIVE':
+            account_details[list_accounts_response['Accounts'][account]['Email']] = list_accounts_response['Accounts'][account]['Id']
+    return account_details
+    
+@helper.create
+def create(event,context):
+    logger.info("Got Create")
+    logger.info(event)
     client = get_client('organizations')
     ec2_client = get_client('ec2')
     accountname = event['ResourceProperties']['AccountName']
@@ -287,29 +303,47 @@ def main(event,context):
     access_to_billing = "DENY"
     scp = None
 
-    if (event['RequestType'] == 'Create'):
+    try: 
         top_level_account = event['ServiceToken'].split(':')[4]
-        print("The top level account is "+top_level_account)
+        logger.info("The top level account is "+top_level_account)
         org_client = get_client('organizations')
-
+    
         try:
             list_roots_response = org_client.list_roots()
             root_id = list_roots_response['Roots'][0]['Id']
-        except:
-            root_id = "Error"
-
-        if root_id != "Error":
+        except botocore.exceptions.ClientError as e:
+            root_id = logger.info(f"Error: {e}")
+            
+        try: 
+            account_details = {}
+            inputtogetconfigurationdetails = {}
+            allaccounts = []
+            list_accounts_response = org_client.list_accounts()
+            
+            while 'NextToken' in list_accounts_response:
+                accounts_ids = build_accounts_list(org_client,list_accounts_response,account_details)
+                list_accounts_response = org_client.list_accounts(NextToken=list_accounts_response['NextToken'])
+            accounts_ids = build_accounts_list(org_client,list_accounts_response,account_details)
+            logger.info(accounts_ids)
+            
+        except botocore.exceptions.ClientError as e:
+            logger.info(f"Couldnot list already create account ids")
+    
+        if root_id != "Error" and accountemail not in accounts_ids and accountname not in accounts_ids.values():
             try:
                 #Create new account
-                print("Creating new account: " + accountname + " (" + accountemail + ")")
-                (create_account_response,account_id) = create_account(accountname,accountemail,accountrole,access_to_billing,scp,root_id)
-                print(create_account_response)
-                print("Created account:{} at {} UTC \n".format(account_id,time.strftime("%d/%m/%Y %H:%M:%S")))
-                time.sleep(20)
+                logger.info("Creating new account: " + accountname + " (" + accountemail + ")")
+                create_account_response,account_id = create_account(accountname,accountemail,accountrole,access_to_billing,scp,root_id)
+                logger.info(create_account_response)
+                while org_client.describe_account(AccountId=account_id)['Account']['Status'] != 'ACTIVE':
+                    logger.info(f"Account Creation Status: {org_client.describe_account(AccountId=account_id)['Account']['Status']}")
+                    time.sleep(5)
+                logger.info(f"Account Status: {org_client.describe_account(AccountId=account_id)['Account']['Status']}")
+                logger.info("Created account:{} at {} UTC \n".format(account_id,time.strftime("%d/%m/%Y %H:%M:%S")))
             except:
-                print("Error creating new account..")
-                sys.exit(0)
-
+                logger.info("Error creating new account..")
+                #sys.exit(0)
+    
             #Create resources in the newly vended account
             try:
                 #Move account to OU provided
@@ -318,16 +352,17 @@ def main(event,context):
                         (organization_unit_name,organization_unit_id) = get_ou_name_id(event, root_id,organization_unit_name)
                         move_response = org_client.move_account(AccountId=account_id,SourceParentId=root_id,DestinationParentId=organization_unit_id)
                     except botocore.exceptions.ClientError as e:
-                        print("An error occured. Org account move response: {} . Error Stack: {}".format(move_response, e))
-                        sys.exit(0)
+                        logger.info("An error occured. Org account move response: {} . Error Stack: {}".format(move_response, e))
+                        #sys.exit(0)
+                        
                 credentials = assume_role(account_id, accountrole)
                 template = get_template(sourcebucket,baselinetemplate)
-
+    
                 # #deploy cloudformation template (AccountBaseline.yml)
                 # stack = deploy_resources(credentials, template, stackname, stackregion, ServiceCatalogUserName, ServiceCatalogUserPassword,account_id)
-                # print(stack)
-                # print("Baseline setup deployment for account " + account_id + " (" + accountemail + ") complete!")
-
+                # logger.info(stack)
+                # logger.info("Baseline setup deployment for account " + account_id + " (" + accountemail + ") complete!")
+    
                 #delete default vpc in every region
                 regions = []
                 regions_response = ec2_client.describe_regions()
@@ -335,41 +370,52 @@ def main(event,context):
                     regions.append(regions_response['Regions'][i]['RegionName'])
                 time.sleep(60)
                 datestamp = time.strftime("%d/%m/%Y %H:%M:%S")
-                print(f"Deleting Default VPCs. Started at {datestamp} ")
+                logger.info(f"Deleting Default VPCs. Started at {datestamp} ")
                 for r in regions:
                     try:
-                        print(f"Deleting VPCs in [{regions.index(r)+1}/{len(regions)}] aws-regions")
+                        logger.info(f"Deleting VPCs in [{regions.index(r)+1}/{len(regions)}] aws-regions")
                         delete_vpc_response = delete_default_vpc(credentials,r)
                     except botocore.exceptions.ClientError as e:
-                        print("An error occured while deleting Default VPC in {}. Error: {}".format(r,e))
+                        logger.info("An error occured while deleting Default VPC in {}. Error: {}".format(r,e))
                         i+=1
-                
-                # if(organization_unit_name!='None'):
-                #     try:
-                #         (organization_unit_name,organization_unit_id) = get_ou_name_id(event, root_id,organization_unit_name)
-                #         move_response = org_client.move_account(AccountId=account_id,SourceParentId=root_id,DestinationParentId=organization_unit_id)
-                #     except botocore.exceptions.ClientError as e:
-                #         print("An error occured. Org account move response: {} . Error Stack: {}".format(move_response, e))
-                #         sys.exit(0)
-                # credentials = assume_role(account_id, accountrole)
-                # template = get_template(sourcebucket,baselinetemplate)
-
+    
                 #deploy cloudformation template (AccountBaseline.yml)
                 stack = deploy_resources(credentials, template, stackname, stackregion, ServiceCatalogUserName, ServiceCatalogUserPassword,account_id)
-                print(stack)
-                print("Baseline setup deployment for account " + account_id + " (" + accountemail + ") complete!")
+                logger.info(stack)
+                logger.info("Baseline setup deployment for account " + account_id + " (" + accountemail + ") complete!")
+                response_data = { 
+                    "Message": "Account created successfully", 
+                    "AccountID" : account_id, 
+                    "LoginURL" : "https://" +account_id+".signin.aws.amazon.com/console", 
+                    "Username" : ServiceCatalogUserName 
+                    }
                 
-                respond_cloudformation(event, "SUCCESS", { "Message": "Account created successfully", "AccountID" : account_id, "LoginURL" : "https://" +account_id+".signin.aws.amazon.com/console", "Username" : ServiceCatalogUserName })
+                #respond_cloudformation(event, "SUCCESS", { "Message": "Account created successfully", "AccountID" : account_id, "LoginURL" : "https://" +account_id+".signin.aws.amazon.com/console", "Username" : ServiceCatalogUserName })
+                #helper.Data["CustomMessage"] = CustomMessage
+                cfnresponse.send(event,context,cfnresponse.SUCCESS,response_data)
             except botocore.exceptions.ClientError as e:
-                print("An error occured. Error Stack: {}".format(e))
-                sys.exit(0)
+                logger.info("An error occured. Error Stack: {}".format(e))
+        else:
+            logger.info(f"Account creation failed. This may be due to an AWS account with the same provided name or email already exists in this Organization")
+    
+    except botocore.exceptions.ClientError as e: 
+        response_data = {
+                "error_message" : e,
+                "CloudWatch Log Group Name" : context.log_group_name
+        }
+        cfnresponse.send(event,context,cfnresponse.FAILED,response_data,e)
 
-    if(event['RequestType'] == 'Update'):
-        print("Template in Update Status")
-        respond_cloudformation(event, "SUCCESS", { "Message": "Resource update successful!" })
 
-    elif(event['RequestType'] == 'Delete'):
-        try:
-            delete_respond_cloudformation(event, "SUCCESS", {"Message":"Delete Request Initiated. Deleting Lambda Function."})
-        except:
-            print("Couldnt initiate delete response.")
+
+    # if(event['RequestType'] == 'Update'):
+    #     logger.info("Template in Update Status")
+    #     respond_cloudformation(event, "SUCCESS", { "Message": "Resource update successful!" })
+
+    # elif(event['RequestType'] == 'Delete'):
+    #     try:
+    #         delete_respond_cloudformation(event, "SUCCESS", {"Message":"Delete Request Initiated. Deleting Lambda Function."})
+    #     except:
+    #         logger.info("Couldnt initiate delete response.")
+
+def main(event,context):
+    helper(event,context)

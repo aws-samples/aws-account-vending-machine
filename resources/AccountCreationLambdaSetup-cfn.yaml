@@ -20,25 +20,25 @@ Parameters:
     Type: String
     AllowedPattern: ".+"
 
-  Requestszip:
-    Description: Requests zip file for creating the Requests Layer
-    Type: String
+  # Requestszip:
+  #   Description: Requests zip file for creating the Requests Layer
+  #   Type: String
 
 Resources:
 
-  RequestLayer:
-    Type: AWS::Lambda::LayerVersion
-    Properties:
-      CompatibleRuntimes:
-        - python3.6
-        - python3.7
-        - python3.8
-      Content:
-        S3Bucket: !Ref SourceBucket
-        S3Key: !Ref Requestszip
-      Description: RequestsLayer
-      LayerName: requests
-      LicenseInfo: MIT
+  # RequestLayer:
+  #   Type: AWS::Lambda::LayerVersion
+  #   Properties:
+  #     CompatibleRuntimes:
+  #       - python3.6
+  #       - python3.7
+  #       - python3.8
+  #     Content:
+  #       S3Bucket: !Ref SourceBucket
+  #       S3Key: !Ref Requestszip
+  #     Description: RequestsLayer
+  #     LayerName: requests
+  #     LicenseInfo: MIT
 
   AccountBuilderLambda:
     Type: "AWS::Lambda::Function"
@@ -47,8 +47,8 @@ Resources:
       Handler: "AccountCreationLambda.main"
       Runtime: "python3.9"
       Role: !GetAtt LambdaExecuteRole.Arn
-      Layers:
-        - !Ref RequestLayer
+      # Layers:
+      #   - !Ref RequestLayer
       Timeout: 800
       TracingConfig:
           Mode: "Active"

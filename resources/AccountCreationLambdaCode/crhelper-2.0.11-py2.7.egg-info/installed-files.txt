@@ -1,0 +1,17 @@
+../crhelper/__init__.py
+../crhelper/__init__.pyc
+../crhelper/__init__.pyi
+../crhelper/log_helper.py
+../crhelper/log_helper.pyc
+../crhelper/log_helper.pyi
+../crhelper/py.typed
+../crhelper/resource_helper.py
+../crhelper/resource_helper.pyc
+../crhelper/resource_helper.pyi
+../crhelper/utils.py
+../crhelper/utils.pyc
+../crhelper/utils.pyi
+PKG-INFO
+SOURCES.txt
+dependency_links.txt
+top_level.txt
