@@ -17,10 +17,8 @@ import argparse
 import os
 import urllib
 import json
-# import requests
 from crhelper import CfnResource
 import logging
-import cfnresponse
 
 logger = logging.getLogger(__name__)
 # Initialise the helper, all inputs are optional, this example shows the defaults
@@ -49,6 +47,7 @@ def create_account(accountname,accountemail,accountrole,access_to_billing,scp,ro
                                                         IamUserAccessToBilling=access_to_billing)
     except botocore.exceptions.ClientError as e:
         logger.info(e)
+        return(create_account_response,account_id)
         #sys.exit(1)
     #time.sleep(30)
     create_account_status_response = client.describe_create_account_status(CreateAccountRequestId=create_account_response.get('CreateAccountStatus').get('Id'))
@@ -121,9 +120,9 @@ def deploy_resources(credentials, template, stackname, stackregion, ServiceCatal
                           aws_secret_access_key=credentials['SecretAccessKey'],
                           aws_session_token=credentials['SessionToken'],
                           region_name=stackregion)
-    time.sleep(120)
+    #time.sleep(120)
     
-    logger.info("Deploying stack - " + stackname + " in " + account_id + "started at " + time.strftime("%d/%m/%Y %H:%M:%S"))
+    logger.info("Deploying stack - " + stackname + " in " + account_id + " started at " + time.strftime("%d/%m/%Y %H:%M:%S"))
     
     creating_stack = True
     while creating_stack is True:
@@ -233,7 +232,6 @@ def get_ou_name_id(event, root_id,organization_unit_name):
                         organization_unit_id = v1
         except botocore.exceptions.ClientError as e:
             logger.info("Error in creating the OU: {}".format(e))
-            respond_cloudformation(event, "FAILED", { "Message": "Could not list out AWS Organization OUs. Account creation Aborted."})
 
     else:
         for i in range(len(list_of_OU_names)):
@@ -241,42 +239,6 @@ def get_ou_name_id(event, root_id,organization_unit_name):
         organization_unit_id = ou_name_to_id[organization_unit_name]
 
     return(organization_unit_name,organization_unit_id)
-
-# def respond_cloudformation(event, status, data=None):
-#     responseBody = {
-#         'Status': status,
-#         'Reason': 'See the details in CloudWatch Log Stream',
-#         'PhysicalResourceId': event['ServiceToken'],
-#         'StackId': event['StackId'],
-#         'RequestId': event['RequestId'],
-#         'LogicalResourceId': event['LogicalResourceId'],
-#         'Data': data
-#     }
-
-#     logger.info('Response = ' + json.dumps(responseBody))
-#     logger.info(event)
-#     requests.post(event['ResponseURL'], data=json.dumps(responseBody))
-#     return True
-
-# def delete_respond_cloudformation(event, status, data=None):
-#     responseBody = {
-#         'Status': status,
-#         'Reason': 'See the details in CloudWatch Log Stream',
-#         'PhysicalResourceId': event['ServiceToken'],
-#         'StackId': event['StackId'],
-#         'RequestId': event['RequestId'],
-#         'LogicalResourceId': event['LogicalResourceId'],
-#         'Data': data
-#     }
-
-#     logger.info('Response = ' + json.dumps(responseBody))
-#     logger.info(event)
-#     lambda_client = get_client('lambda')
-#     function_name = os.environ['AWS_LAMBDA_FUNCTION_NAME']
-#     logger.info('Deleting Lambda')
-#     lambda_client.delete_function(FunctionName=function_name)
-#     requests.post(event['ResponseURL'], data=json.dumps(responseBody))
-
 
 def build_accounts_list(org_client,list_accounts_response,account_details):
     for account in range(0,len(list_accounts_response['Accounts'])):
@@ -303,119 +265,91 @@ def create(event,context):
     access_to_billing = "DENY"
     scp = None
 
-    try: 
+    try:
         top_level_account = event['ServiceToken'].split(':')[4]
         logger.info("The top level account is "+top_level_account)
         org_client = get_client('organizations')
     
-        try:
-            list_roots_response = org_client.list_roots()
-            root_id = list_roots_response['Roots'][0]['Id']
-        except botocore.exceptions.ClientError as e:
-            root_id = logger.info(f"Error: {e}")
-            
-        try: 
-            account_details = {}
-            inputtogetconfigurationdetails = {}
-            allaccounts = []
-            list_accounts_response = org_client.list_accounts()
-            
-            while 'NextToken' in list_accounts_response:
-                accounts_ids = build_accounts_list(org_client,list_accounts_response,account_details)
-                list_accounts_response = org_client.list_accounts(NextToken=list_accounts_response['NextToken'])
+        list_roots_response = org_client.list_roots()
+        root_id = list_roots_response['Roots'][0]['Id']
+        
+        account_details = {}
+        inputtogetconfigurationdetails = {}
+        allaccounts = []
+        list_accounts_response = org_client.list_accounts()
+        
+        while 'NextToken' in list_accounts_response:
             accounts_ids = build_accounts_list(org_client,list_accounts_response,account_details)
-            logger.info(accounts_ids)
+            list_accounts_response = org_client.list_accounts(NextToken=list_accounts_response['NextToken'])
+        accounts_ids = build_accounts_list(org_client,list_accounts_response,account_details)
+        logger.info(f"List of all AWS accounts created under the Organization Root : {accounts_ids}")
             
-        except botocore.exceptions.ClientError as e:
-            logger.info(f"Couldnot list already create account ids")
     
         if root_id != "Error" and accountemail not in accounts_ids and accountname not in accounts_ids.values():
-            try:
-                #Create new account
-                logger.info("Creating new account: " + accountname + " (" + accountemail + ")")
-                create_account_response,account_id = create_account(accountname,accountemail,accountrole,access_to_billing,scp,root_id)
-                logger.info(create_account_response)
-                while org_client.describe_account(AccountId=account_id)['Account']['Status'] != 'ACTIVE':
-                    logger.info(f"Account Creation Status: {org_client.describe_account(AccountId=account_id)['Account']['Status']}")
-                    time.sleep(5)
-                logger.info(f"Account Status: {org_client.describe_account(AccountId=account_id)['Account']['Status']}")
-                logger.info("Created account:{} at {} UTC \n".format(account_id,time.strftime("%d/%m/%Y %H:%M:%S")))
-            except:
-                logger.info("Error creating new account..")
-                #sys.exit(0)
-    
-            #Create resources in the newly vended account
-            try:
-                #Move account to OU provided
-                if(organization_unit_name!='None'):
-                    try:
-                        (organization_unit_name,organization_unit_id) = get_ou_name_id(event, root_id,organization_unit_name)
-                        move_response = org_client.move_account(AccountId=account_id,SourceParentId=root_id,DestinationParentId=organization_unit_id)
-                    except botocore.exceptions.ClientError as e:
-                        logger.info("An error occured. Org account move response: {} . Error Stack: {}".format(move_response, e))
-                        #sys.exit(0)
-                        
-                credentials = assume_role(account_id, accountrole)
-                template = get_template(sourcebucket,baselinetemplate)
-    
-                # #deploy cloudformation template (AccountBaseline.yml)
-                # stack = deploy_resources(credentials, template, stackname, stackregion, ServiceCatalogUserName, ServiceCatalogUserPassword,account_id)
-                # logger.info(stack)
-                # logger.info("Baseline setup deployment for account " + account_id + " (" + accountemail + ") complete!")
-    
-                #delete default vpc in every region
-                regions = []
-                regions_response = ec2_client.describe_regions()
-                for i in range(0,len(regions_response['Regions'])):
-                    regions.append(regions_response['Regions'][i]['RegionName'])
-                time.sleep(60)
-                datestamp = time.strftime("%d/%m/%Y %H:%M:%S")
-                logger.info(f"Deleting Default VPCs. Started at {datestamp} ")
-                for r in regions:
-                    try:
-                        logger.info(f"Deleting VPCs in [{regions.index(r)+1}/{len(regions)}] aws-regions")
-                        delete_vpc_response = delete_default_vpc(credentials,r)
-                    except botocore.exceptions.ClientError as e:
-                        logger.info("An error occured while deleting Default VPC in {}. Error: {}".format(r,e))
-                        i+=1
-    
-                #deploy cloudformation template (AccountBaseline.yml)
-                stack = deploy_resources(credentials, template, stackname, stackregion, ServiceCatalogUserName, ServiceCatalogUserPassword,account_id)
-                logger.info(stack)
-                logger.info("Baseline setup deployment for account " + account_id + " (" + accountemail + ") complete!")
-                response_data = { 
-                    "Message": "Account created successfully", 
-                    "AccountID" : account_id, 
-                    "LoginURL" : "https://" +account_id+".signin.aws.amazon.com/console", 
-                    "Username" : ServiceCatalogUserName 
-                    }
-                
-                #respond_cloudformation(event, "SUCCESS", { "Message": "Account created successfully", "AccountID" : account_id, "LoginURL" : "https://" +account_id+".signin.aws.amazon.com/console", "Username" : ServiceCatalogUserName })
-                #helper.Data["CustomMessage"] = CustomMessage
-                cfnresponse.send(event,context,cfnresponse.SUCCESS,response_data)
-            except botocore.exceptions.ClientError as e:
-                logger.info("An error occured. Error Stack: {}".format(e))
+            #Create new account
+            logger.info("Creating new account: " + accountname + " (" + accountemail + ")")
+            create_account_response,account_id = create_account(accountname,accountemail,accountrole,access_to_billing,scp,root_id)
+            logger.info(create_account_response)
         else:
-            logger.info(f"Account creation failed. This may be due to an AWS account with the same provided name or email already exists in this Organization")
-    
-    except botocore.exceptions.ClientError as e: 
+            logger.error(f"Account creation failed. This may be due to an AWS account with the same provided name or email already exists in this Organization")
+            raise ValueError("Account creation failed. This may be due to an AWS account with the same provided name or email already exists in this Organization")
+        
+        while org_client.describe_account(AccountId=account_id)['Account']['Status'] != 'ACTIVE':
+            logger.info(f"Account Creation Status: {org_client.describe_account(AccountId=account_id)['Account']['Status']}")
+            time.sleep(5)
+        logger.info(f"Account Status: {org_client.describe_account(AccountId=account_id)['Account']['Status']}")
+        logger.info("Created account:{} at {} UTC \n".format(account_id,time.strftime("%d/%m/%Y %H:%M:%S")))
+
+
+        #Move account to OU provided
+        if(organization_unit_name!='None'):
+            try:
+                (organization_unit_name,organization_unit_id) = get_ou_name_id(event, root_id,organization_unit_name)
+                move_response = org_client.move_account(AccountId=account_id,SourceParentId=root_id,DestinationParentId=organization_unit_id)
+            except botocore.exceptions.ClientError as e:
+                logger.info("An error occured. Org account move response: {} . Error Stack: {}".format(move_response, e))
+                #sys.exit(0)
+                
+        credentials = assume_role(account_id, accountrole)
+        template = get_template(sourcebucket,baselinetemplate)
+
+        #delete default vpc in every region
+        regions = []
+        regions_response = ec2_client.describe_regions()
+        for i in range(0,len(regions_response['Regions'])):
+            regions.append(regions_response['Regions'][i]['RegionName'])
+        time.sleep(60)
+        datestamp = time.strftime("%d/%m/%Y %H:%M:%S")
+        logger.info(f"Deleting Default VPCs. Started at {datestamp} ")
+        for r in regions:
+            try:
+                logger.info(f"Deleting VPCs in [{regions.index(r)+1}/{len(regions)}] aws-regions")
+                delete_vpc_response = delete_default_vpc(credentials,r)
+            except botocore.exceptions.ClientError as e:
+                logger.info("An error occured while deleting Default VPC in {}. Error: {}".format(r,e))
+                i+=1
+
+        #deploy cloudformation template (AccountBaseline.yml)
+        stack = deploy_resources(credentials, template, stackname, stackregion, ServiceCatalogUserName, ServiceCatalogUserPassword,account_id)
+        logger.info(stack)
+        logger.info("Baseline setup deployment for account " + account_id + " (" + accountemail + ") complete!")
+        response_data = { 
+            "Message": "Account created successfully", 
+            "AccountID" : account_id, 
+            "LoginURL" : "https://" +account_id+".signin.aws.amazon.com/console", 
+            "Username" : ServiceCatalogUserName 
+            }
+        
+        helper.Data.update(response_data)
+        
+    except ValueError as e:
         response_data = {
-                "error_message" : e,
-                "CloudWatch Log Group Name" : context.log_group_name
+            "Log_Group_Name" : context.log_group_name,
+            "Error" : str(e)
         }
-        cfnresponse.send(event,context,cfnresponse.FAILED,response_data,e)
-
-
-
-    # if(event['RequestType'] == 'Update'):
-    #     logger.info("Template in Update Status")
-    #     respond_cloudformation(event, "SUCCESS", { "Message": "Resource update successful!" })
-
-    # elif(event['RequestType'] == 'Delete'):
-    #     try:
-    #         delete_respond_cloudformation(event, "SUCCESS", {"Message":"Delete Request Initiated. Deleting Lambda Function."})
-    #     except:
-    #         logger.info("Couldnt initiate delete response.")
+        helper.Data.update(response_data)
+        raise
+    
 
 def main(event,context):
     helper(event,context)
