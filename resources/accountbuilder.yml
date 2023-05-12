@@ -21,6 +21,8 @@ Metadata:
           - StackRegion
           - SourceBucket
           - BaselineTemplate
+          - ServiceCatalogUserName
+          - ServiceCatalogUserPassword
 
 Parameters:
   MasterLambdaArn:
