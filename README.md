@@ -11,8 +11,7 @@ The account builder is an AWS Service Catalog product that uses AWS Lambda and A
 1. Creates a new AWS account.
 2.	If provided, creates an organization unit under the root account in AWS Organizations.
 3.	Moves the newly created account from the organization root to the newly created organizational unit.
-4.	Creates a service control policy and attaches it to the new account.
-5.	Assumes the role OrganizationAccountAccessRole in the new account for the following:
+4.	Assumes the role OrganizationAccountAccessRole in the new account for the following:
 	- Creating an IAM user with the provided password.
 	- Adding the IAM user to a new group with least privilege permissions to access AWS Service Catalog.
 	- Deploying baseline templates for creating AWS Service Catalog portfolio and products.
@@ -34,13 +33,19 @@ As a part of creating a sample account vending machine from this repository, you
     - Ireland (eu-west-1)
     - Singapore (ap-southeast-1)
 _Note: You can customize this implementation to work with linked accounts as well, but for the purposes of this exercise, we will use the master account._
-2. Click on the `Launch Stack` image below this sentence to launch a Cloudformation template that will setup the required infrastructure for account vending machine in your AWS account.
-[![Launch Stack](/resources/images/launch-stack.svg)](https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=aws-avm-infrastructure-setup&templateURL=https://aws-samples-aws-account-vending-machine.s3.us-west-2.amazonaws.com/AccountCreationLambdaSetup-cfn.yaml)
-3. On the `Create Stack` page, click `Next`.
+2. The scripts and templates needed for this exercise should be available in an S3 bucket one of the above choosen AWS regions.
+	- Create a new S3 bucket (or you can reuse any existing bucket as well)
+	- Upload all the scripts and templates available in the resources folder of this repo
+	- Make sure to update all these files: 
+		- resources/AccountCreationLambdaSetup-cfn.yaml
+		- resources/accountbuilder.yml
+		- resources/Accountbaseline.yml
+		- resources/AccountCreationLambda.zip
+3. Navigate to the CloudFormation console and launch a new template pointing it to the resources/AccountCreationLambdaSetup-cfn.yaml template and click `Next`
 4. On the `Specify stack details` page, enter the following parameters:
 	- `AccountAdministrator` - Enter the ARN of the IAM entity (role or user or group) that will be performing account creation from AWS Service Catalog. You can go to the IAM console to find the ARN of the role/user/group. (eg. arn:aws:iam::010010011111:role/Administrator)
 	- `SourceBucket` - Keep the default value for the S3 bucket. _Note_: To use your own S3 bucket, you can upload all the files in the /resources folder in Github to your own S3 bucket.
-	- `SourceTemplate` - Keep the default value. _Note_: To launch your own CloudFormation template in the new account, make sure the template parameters have a default value, and replace the `Accountbaseline.yml` template we've provided for this demo. You will also have to edit the lambda function to reflect the parameters in your custom template.
+	- `SourceTemplate` - Keep to resources/Accountbaseline.yml. _Note_: To launch your own CloudFormation template in the new account, make sure the template parameters have a default value, and replace the `Accountbaseline.yml` template we've provided for this demo. You will also have to edit the lambda function to reflect the parameters in your custom template.
 5. On the `Configure stack options` page, click `Next`.
 6. On the `Review` page, check the checkbox for `I acknowledge that AWS CloudFormation might create IAM resources.`, and click `Create Stack`.
 7. Once status of the stack changes to `CREATE COMPLETE`, click on the stack and open the `Outputs` tab to see the output values.
@@ -64,13 +69,13 @@ In this section, you will launch the account vending machine product created in 
     - `OrganizationalUnitName`: Name of the organizational unit (OU) to which the account should be moved to. Keep the default value for placing the account at the root level.
 	- `AccountName`: Enter an account name
 	- `StackRegion`: Choose the region where the preconfigured settings should be applied
-	- `SourceBucket`: Keep the default value. OR Enter the name of the source bucket where your baseline CloudFormation template exists.
-	- `BaselineTemplate`: Keep the default value. OR Enter the name of the account baseline CloudFormation template.
+	- `SourceBucket`: Enter the name of the source bucket where your baseline CloudFormation template is available.
+	- `BaselineTemplate`: Keep the default value to Accountbaseline.yml OR Enter the name of the account baseline CloudFormation template you wish to apply as a baseline.
 
 9. Click `NEXT`.
 10. On the `TagOptions` page, click `NEXT`.
 11. On the Notifications page, click `NEXT`.
-12. On the Review page, review the configuration information, and click `LAUNCH`. This will create a CloudFormation stack. The initial status of the product is shown as `Under change`. Wait for about 5 minutes, then refresh the screen till the status changes to `AVAILABLE`. _Note: You can go to the CloudFormation page to monitor the stack progress, or go to CloudWatch to view the step by step execution of the account vending lambda function._
+12. On the Review page, review the configuration information, and click `LAUNCH`. This will create a CloudFormation stack. The initial status of the product is shown as `Under change`. Wait for few minutes, then refresh the screen till the status changes to `AVAILABLE`. _Note: You can go to the CloudFormation page to monitor the stack progress, or go to CloudWatch to view the step by step execution of the account vending lambda function._
 13. In the the `Outputs` section of AWS Service Catalog, you will see the account details of the newly created account as follows.
 ![output](/resources/images/output.png)
 
